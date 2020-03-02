@@ -9,6 +9,7 @@
 
 #include "config/annotation.hpp"
 #include "config/exec_check_disable.hpp"
+#include "config/has_cudart.hpp"
 #include "config/namespace.hpp"
 #include "config/requires.hpp"
 

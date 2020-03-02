@@ -8,8 +8,8 @@
 #    error "Either all of CUDEX_NAMESPACE, CUDEX_NAMESPACE_OPEN_BRACE, and CUDEX_NAMESPACE_CLOSE_BRACE must be defined, or none of them."
 #  endif
 
-#  define CUDEX_NAMESPACE coord
-#  define CUDEX_NAMESPACE_OPEN_BRACE namespace coord {
+#  define CUDEX_NAMESPACE cudex
+#  define CUDEX_NAMESPACE_OPEN_BRACE namespace cudex {
 #  define CUDEX_NAMESPACE_CLOSE_BRACE }
 #  define CUDEX_NAMESPACE_NEEDS_UNDEF
 

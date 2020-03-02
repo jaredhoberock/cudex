@@ -48,6 +48,10 @@
 #error CUDEX_REQUIRES_IMPL defined in client code.
 #endif
 
+#ifdef CUDEX_HAS_CUDART
+#error CUDEX_HAS_CUDART defined in client code.
+#endif
+
 
 void test_preprocessor() {}
 
