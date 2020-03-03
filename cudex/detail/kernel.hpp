@@ -49,6 +49,12 @@ class kernel
       set_device(old_device);
     }
 
+    CUDEX_ANNOTATION
+    cudaStream_t stream() const
+    {
+      return stream_;
+    }
+
   private:
     template<class F>
     CUDEX_ANNOTATION
