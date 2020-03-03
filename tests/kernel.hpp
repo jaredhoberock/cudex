@@ -17,7 +17,7 @@ void test()
     result = expected;
   };
 
-  auto kernel = cudex::detail::make_kernel(f, dim3(1), dim3(1), 0, 0, 0, 0, 0);
+  auto kernel = cudex::detail::make_kernel(f, dim3(1), dim3(1), 0, 0, 0);
 
   kernel.start();
 

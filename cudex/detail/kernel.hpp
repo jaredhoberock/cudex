@@ -28,8 +28,8 @@ class kernel
     static_assert(std::is_trivially_copyable<Function>::value, "Function must be trivially copyable.");
 
     CUDEX_ANNOTATION
-    kernel(Function f, dim3 grid_dim, dim3 block_dim, std::size_t shared_memory_size, cudaStream_t stream, cudaEvent_t predecessor, cudaEvent_t successor, int device) noexcept
-      : f_(f), grid_dim_(grid_dim), block_dim_(block_dim), shared_memory_size_(shared_memory_size), stream_(stream), predecessor_(predecessor), successor_(successor), device_(device)
+    kernel(Function f, dim3 grid_dim, dim3 block_dim, std::size_t shared_memory_size, cudaStream_t stream, int device) noexcept
+      : f_(f), grid_dim_(grid_dim), block_dim_(block_dim), shared_memory_size_(shared_memory_size), stream_(stream), device_(device)
     {}
 
     kernel(const kernel&) = delete;
@@ -39,12 +39,6 @@ class kernel
     CUDEX_ANNOTATION
     void start()
     {
-      if(predecessor_ != 0)
-      {
-        // tell the stream to wait on the predecessor
-        stream_wait_event(stream_, predecessor_);
-      }
-
       // switch to the requested device
       int old_device = set_device(device_);
 
@@ -53,12 +47,6 @@ class kernel
 
       // switch back to the original device
       set_device(old_device);
-
-      if(successor_ != 0)
-      {
-        // record successor event
-        event_record(successor_, stream_);
-      }
     }
 
   private:
@@ -136,48 +124,20 @@ class kernel
       return result;
     }
 
-    CUDEX_ANNOTATION
-    static void stream_wait_event(cudaStream_t stream, cudaEvent_t event)
-    {
-#if CUDEX_HAS_CUDART
-      if(cudaError_t error = cudaStreamWaitEvent(stream, event, 0))
-      {
-        detail::throw_on_error(error, "kernel::stream_wait_event: CUDA error after cudaStreamWaitEvent");
-      }
-#else
-      detail::throw_on_error(cudaErrorNotSupported, "kernel::stream_wait_event");
-#endif
-    }
-
-    CUDEX_ANNOTATION
-    static void event_record(cudaEvent_t event, cudaStream_t stream)
-    {
-#if CUDEX_HAS_CUDART
-      if(cudaError_t error = cudaEventRecord(event, stream))
-      {
-        detail::throw_on_error(error, "kernel::event_record: CUDA error after cudaEventRecord");
-      }
-#else
-      detail::throw_on_error(cudaErrorNotSupported, "kernel::event_record");
-#endif
-    }
-
     Function f_;
     dim3 grid_dim_;
     dim3 block_dim_;
     std::size_t shared_memory_size_;
     cudaStream_t stream_;
-    cudaEvent_t predecessor_;
-    cudaEvent_t successor_;
     int device_;
 };
 
 
 template<class Function>
 CUDEX_ANNOTATION
-kernel<Function> make_kernel(Function f, dim3 grid_dim, dim3 block_dim, std::size_t shared_memory_size, cudaStream_t stream, cudaEvent_t predecessor, cudaEvent_t successor, int device) noexcept
+kernel<Function> make_kernel(Function f, dim3 grid_dim, dim3 block_dim, std::size_t shared_memory_size, cudaStream_t stream, int device) noexcept
 {
-  return {f, grid_dim, block_dim, shared_memory_size, stream, predecessor, successor, device};
+  return {f, grid_dim, block_dim, shared_memory_size, stream, device};
 }
 
 
