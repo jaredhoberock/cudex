@@ -1,5 +1,5 @@
 #include <cassert>
-#include <cudex/detail/grid.hpp>
+#include <cudex/detail/kernel.hpp>
 
 #ifdef __CUDACC__
 
@@ -20,7 +20,7 @@ void test()
   cudaEvent_t event{};
   assert(cudaEventCreateWithFlags(&event, cudaEventDefault) == cudaSuccess);
 
-  cudex::detail::make_grid(f, dim3(1), dim3(1), 0, 0, 0).connect(event).start();
+  cudex::detail::make_kernel(f, dim3(1), dim3(1), 0, 0, 0).connect(event).start();
 
 #ifndef __CUDA_ARCH__
   assert(cudaEventSynchronize(event) == cudaSuccess);
@@ -34,7 +34,7 @@ void test()
 }
 
 
-__global__ void test_kernel()
+__global__ void global_function()
 {
   test();
 }
@@ -43,14 +43,14 @@ __global__ void test_kernel()
 #endif // __CUDACC__
 
 
-void test_grid()
+void test_kernel()
 {
 #if __CUDACC__
   // test from host
   test();
 
   // test from device
-  test_kernel<<<1,1>>>();
+  global_function<<<1,1>>>();
 #endif
 }
 

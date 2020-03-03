@@ -42,16 +42,16 @@ namespace detail
 
 
 template<class Function>
-class grid
+class kernel
 {
   private:
     static_assert(std::is_trivially_copyable<Function>::value, "Function must be trivially copyable.");
 
-    class launch_kernel_and_record_event
+    class launch_and_record_event
     {
       public:
         CUDEX_ANNOTATION
-        launch_kernel_and_record_event(kernel_launch<Function> kernel, cudaEvent_t successor)
+        launch_and_record_event(kernel_launch<Function> kernel, cudaEvent_t successor)
           : kernel_launch_(std::move(kernel)), successor_(successor)
         {}
 
@@ -64,14 +64,14 @@ class grid
             kernel_launch_.start();
 
             // record the event
-            detail::throw_on_error(cudaEventRecord(successor_, kernel_launch_.stream()), "grid::launch_kernel_and_record_event::start: CUDA error after cudaEventRecord");
+            detail::throw_on_error(cudaEventRecord(successor_, kernel_launch_.stream()), "kernel::launch_and_record_event::start: CUDA error after cudaEventRecord");
 
             // invalidate our state
             successor_ = 0;
           }
           else
           {
-            detail::throw_runtime_error("grid::launch_kernel_and_record_event::start: Invalid state.");
+            detail::throw_runtime_error("kernel::launch_and_record_event::start: Invalid state.");
           }
         }
 
@@ -88,12 +88,12 @@ class grid
 
   public:
     CUDEX_ANNOTATION
-    grid(Function f, dim3 grid_dim, dim3 block_dim, std::size_t shared_memory_size, cudaStream_t stream, int device) noexcept
+    kernel(Function f, dim3 grid_dim, dim3 block_dim, std::size_t shared_memory_size, cudaStream_t stream, int device) noexcept
       : kernel_launch_{f, grid_dim, block_dim, shared_memory_size, stream, device}
     {}
 
     CUDEX_ANNOTATION
-    launch_kernel_and_record_event connect(cudaEvent_t event) && noexcept
+    launch_and_record_event connect(cudaEvent_t event) && noexcept
     {
       return {std::move(kernel_launch_), event};
     }
@@ -113,7 +113,7 @@ class grid
 
 template<class Function>
 CUDEX_ANNOTATION
-grid<Function> make_grid(Function f, dim3 grid_dim, dim3 block_dim, std::size_t shared_memory_size, cudaStream_t stream, int device) noexcept
+kernel<Function> make_kernel(Function f, dim3 grid_dim, dim3 block_dim, std::size_t shared_memory_size, cudaStream_t stream, int device) noexcept
 {
   return {f, grid_dim, block_dim, shared_memory_size, stream, device};
 }
