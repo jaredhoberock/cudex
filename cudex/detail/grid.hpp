@@ -30,7 +30,7 @@
 
 #include <cuda_runtime_api.h>
 #include <utility>
-#include "kernel.hpp"
+#include "kernel_launch.hpp"
 #include "throw_on_error.hpp"
 #include "throw_runtime_error.hpp"
 
@@ -51,8 +51,8 @@ class grid
     {
       public:
         CUDEX_ANNOTATION
-        launch_kernel_and_record_event(kernel<Function> kernel, cudaEvent_t successor)
-          : kernel_(std::move(kernel)), successor_(successor)
+        launch_kernel_and_record_event(kernel_launch<Function> kernel, cudaEvent_t successor)
+          : kernel_launch_(std::move(kernel)), successor_(successor)
         {}
 
         CUDEX_ANNOTATION
@@ -61,10 +61,10 @@ class grid
           if(valid())
           {
             // start the kernel
-            kernel_.start();
+            kernel_launch_.start();
 
             // record the event
-            detail::throw_on_error(cudaEventRecord(successor_, kernel_.stream()), "grid::launch_kernel_and_record_event::start: CUDA error after cudaEventRecord");
+            detail::throw_on_error(cudaEventRecord(successor_, kernel_launch_.stream()), "grid::launch_kernel_and_record_event::start: CUDA error after cudaEventRecord");
 
             // invalidate our state
             successor_ = 0;
@@ -82,20 +82,20 @@ class grid
           return successor_ != 0;
         }
 
-        kernel<Function> kernel_;
+        kernel_launch<Function> kernel_launch_;
         cudaEvent_t successor_;
     };
 
   public:
     CUDEX_ANNOTATION
     grid(Function f, dim3 grid_dim, dim3 block_dim, std::size_t shared_memory_size, cudaStream_t stream, int device) noexcept
-      : kernel_{f, grid_dim, block_dim, shared_memory_size, stream, device}
+      : kernel_launch_{f, grid_dim, block_dim, shared_memory_size, stream, device}
     {}
 
     CUDEX_ANNOTATION
     launch_kernel_and_record_event connect(cudaEvent_t event) && noexcept
     {
-      return {std::move(kernel_), event};
+      return {std::move(kernel_launch_), event};
     }
 
     // what should we actually do in general?
@@ -107,7 +107,7 @@ class grid
     //void connect(Receiver&& r);
 
   private:
-    kernel<Function> kernel_;
+    kernel_launch<Function> kernel_launch_;
 };
 
 

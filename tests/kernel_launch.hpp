@@ -1,5 +1,5 @@
 #include <cassert>
-#include <cudex/detail/kernel.hpp>
+#include <cudex/detail/kernel_launch.hpp>
 
 #ifdef __CUDACC__
 
@@ -17,7 +17,7 @@ void test()
     result = expected;
   };
 
-  auto kernel = cudex::detail::make_kernel(f, dim3(1), dim3(1), 0, 0, 0);
+  auto kernel = cudex::detail::make_kernel_launch(f, dim3(1), dim3(1), 0, 0, 0);
 
   kernel.start();
 
@@ -27,7 +27,7 @@ void test()
 }
 
 
-__global__ void kernel()
+__global__ void global_function()
 {
   test();
 }
@@ -36,12 +36,12 @@ __global__ void kernel()
 #endif // __CUDACC__
 
 
-void test_kernel()
+void test_kernel_launch()
 {
 #if __CUDACC__
   test();
 
-  kernel<<<1,1>>>();
+  global_function<<<1,1>>>();
   assert(cudaDeviceSynchronize() == cudaSuccess);
 #endif
 }
