@@ -26,12 +26,31 @@
 
 #pragma once
 
-#include "prologue.hpp"
+#include "../prologue.hpp"
 
-#include "type_traits/invoke_result.hpp"
-#include "type_traits/is_detected.hpp"
-#include "type_traits/is_invocable.hpp"
-#include "type_traits/remove_cvref.hpp"
+#include <type_traits>
 
-#include "epilogue.hpp"
+CUDEX_NAMESPACE_OPEN_BRACE
+
+
+namespace detail
+{
+
+
+template<class T>
+struct remove_cvref
+{
+  using type = typename std::remove_cv<typename std::remove_reference<T>::type>::type;
+};
+
+template<class T>
+using remove_cvref_t = typename remove_cvref<T>::type;
+
+
+} // end detail
+
+
+CUDEX_NAMESPACE_CLOSE_BRACE
+
+#include "../epilogue.hpp"
 
