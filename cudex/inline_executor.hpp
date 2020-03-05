@@ -30,7 +30,7 @@
 
 #include <utility>
 #include "detail/execution.hpp"
-#include "detail/invoke.hpp"
+#include "detail/functional/invoke.hpp"
 #include "detail/type_traits.hpp"
 
 CUDEX_NAMESPACE_OPEN_BRACE
