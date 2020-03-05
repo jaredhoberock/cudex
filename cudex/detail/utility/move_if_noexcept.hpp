@@ -26,7 +26,7 @@
 
 #pragma once
 
-#include "prologue.hpp"
+#include "../prologue.hpp"
 
 #include <utility>
 #include <type_traits>
@@ -56,5 +56,5 @@ typename std::conditional<
 
 CUDEX_NAMESPACE_CLOSE_BRACE
 
-#include "epilogue.hpp"
+#include "../epilogue.hpp"
 
