@@ -39,14 +39,14 @@ namespace detail
 
 // XXX fully implement this using e.g. reference code on cppreference
 template<class F, class... Args>
-struct invoke_result
-{
-  using type = decltype(std::declval<F>()(std::declval<Args>()...));
-};
+using invoke_result_t = decltype(std::declval<F>()(std::declval<Args>()...));
 
-
+// this is implemented in terms of invoke_result_t to enable invoke_result_t to work with is_detected
 template<class F, class... Args>
-using invoke_result_t = typename invoke_result<F,Args...>::type;
+struct invoke_Result
+{
+  using type = invoke_result_t<F, Args...>;
+};
 
 
 } // end detail

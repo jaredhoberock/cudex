@@ -26,10 +26,10 @@
 
 #pragma once
 
-#include "prologue.hpp"
+#include "../prologue.hpp"
 
 #include <utility>
-#include "type_traits/invoke_result.hpp"
+#include "../type_traits/is_invocable.hpp"
 
 CUDEX_NAMESPACE_OPEN_BRACE
 
@@ -40,9 +40,12 @@ namespace detail
 
 // XXX fully-implement this for pointers to member functions, etc.
 CUDEX_EXEC_CHECK_DISABLE
-template<class F, class... Args>
+template<class F, class... Args,
+         CUDEX_REQUIRES(is_invocable<F&&, Args&&...>::value)
+        >
 CUDEX_ANNOTATION
-invoke_result_t<F, Args...> invoke(F&& f, Args&&... args)
+auto invoke(F&& f, Args&&... args)
+  -> decltype(std::forward<F>(f)(std::forward<Args>(args)...))
 {
   return std::forward<F>(f)(std::forward<Args>(args)...);
 }
@@ -53,5 +56,5 @@ invoke_result_t<F, Args...> invoke(F&& f, Args&&... args)
 
 CUDEX_NAMESPACE_CLOSE_BRACE
 
-#include "epilogue.hpp"
+#include "../epilogue.hpp"
 

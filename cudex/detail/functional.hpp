@@ -26,26 +26,10 @@
 
 #pragma once
 
-#include "../prologue.hpp"
+#include "prologue.hpp"
 
-#include "invoke_result.hpp"
-#include "is_detected.hpp"
+#include "functional/compose.hpp"
+#include "functional/invoke.hpp"
 
-CUDEX_NAMESPACE_OPEN_BRACE
-
-
-namespace detail
-{
-
-
-template<class F, class... Args>
-using is_invocable = is_detected<invoke_result_t, F, Args...>;
-
-
-} // end detail
-
-
-CUDEX_NAMESPACE_CLOSE_BRACE
-
-#include "../epilogue.hpp"
+#include "epilogue.hpp"
 
