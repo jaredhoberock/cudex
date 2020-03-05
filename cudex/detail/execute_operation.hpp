@@ -51,6 +51,11 @@ class execute_operation
       : ex_(ex), f_(std::forward<OtherInvocable>(f))
     {}
 
+    CUDEX_ANNOTATION
+    execute_operation(execute_operation&& other)
+      : ex_(std::move(other.ex_)), f_(std::move(other.f_))
+    {}
+
     template<CUDEX_REQUIRES(execution::is_executor_of<Executor,Invocable&&>::value)>
     CUDEX_ANNOTATION
     void start() &&
