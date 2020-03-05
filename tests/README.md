@@ -30,3 +30,9 @@ For example, a unit test named `foo.cpp` should look like:
 
 The `Makefile` automates this. To create a new unit test for `foo`, create a header file named `foo.hpp` and define a function named `test_foo`. The `Makefile` will take care of the rest.
 
+# Style Guide
+
+To the degree possible, these unit test programs should be self-contained. This makes it easy to isolate test failures and produce minimal reproducer programs for bug reports.
+
+The tradeoff is that common constructs these programs use are repeated.
+
