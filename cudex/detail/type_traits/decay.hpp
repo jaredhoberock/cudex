@@ -1,4 +1,4 @@
-// Copyright (c) 2020, NVIDIA CORPORATION. All rights reserved.
+// Copyright (c) 2017, NVIDIA CORPORATION. All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions
@@ -26,14 +26,21 @@
 
 #pragma once
 
-#include "prologue.hpp"
+#include "../prologue.hpp"
 
-#include "type_traits/decay.hpp"
-#include "type_traits/disjunction.hpp"
-#include "type_traits/invoke_result.hpp"
-#include "type_traits/is_detected.hpp"
-#include "type_traits/is_invocable.hpp"
-#include "type_traits/remove_cvref.hpp"
+#include <type_traits>
 
-#include "epilogue.hpp"
+CUDEX_NAMESPACE_OPEN_BRACE
+
+
+namespace detail
+{
+
+template<class T>
+using decay_t = typename std::decay<T>::type;
+
+} // end detail
+
+
+CUDEX_NAMESPACE_CLOSE_BRACE
 
