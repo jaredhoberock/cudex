@@ -51,6 +51,8 @@ class execute_operation
       : ex_(ex), f_(std::forward<OtherInvocable>(f))
     {}
 
+    execute_operation(const execute_operation&) = default;
+
     CUDEX_ANNOTATION
     execute_operation(execute_operation&& other)
       : ex_(std::move(other.ex_)), f_(std::move(other.f_))

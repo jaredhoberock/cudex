@@ -55,6 +55,36 @@ struct rvalue_invocable
 };
 
 
+struct copyable_invocable
+{
+  int& result;
+  int value;
+
+  copyable_invocable(const copyable_invocable&) = default;
+
+  __host__ __device__
+  void operator()()
+  {
+    result = value;
+  }
+};
+
+
+struct move_only_invocable
+{
+  int& result;
+  int value;
+
+  move_only_invocable(move_only_invocable&&) = default;
+
+  __host__ __device__
+  void operator()()
+  {
+    result = value;
+  }
+};
+
+
 __host__ __device__
 void test()
 {
@@ -95,6 +125,34 @@ void test()
     auto op = make_execute_operation(ex, f);
 
     std::move(op).start();
+
+    assert(expected == result);
+  }
+
+  {
+    int result = 0;
+    int expected = 13;
+
+    copyable_invocable f{result, expected};
+    auto op = make_execute_operation(ex, f);
+
+    auto op_copy = op;
+
+    op_copy.start();
+
+    assert(expected == result);
+  }
+
+  {
+    int result = 0;
+    int expected = 13;
+
+    move_only_invocable f{result, expected};
+    auto op = make_execute_operation(ex, std::move(f));
+
+    auto op_moved = std::move(op);
+
+    op_moved.start();
 
     assert(expected == result);
   }
