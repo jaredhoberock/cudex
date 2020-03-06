@@ -47,35 +47,35 @@ struct my_receiver
 
 template<class Executor>
 __host__ __device__
-void test(Executor ex)
+void test_copyable(Executor ex)
 {
   using namespace cudex;
 
-  {
-    // test copyable type
-    
-    result = 0;
-    int expected = 13;
+  result = 0;
+  int expected = 13;
 
-    my_receiver r;
+  my_receiver r;
 
-    just_via(ex, expected).connect(std::move(r)).start();
+  just_via(ex, expected).connect(std::move(r)).start();
 
-    assert(expected == result);
-  }
+  assert(expected == result);
+}
 
-  {
-    // test move-only type
 
-    result = 0;
-    int expected = 13;
+template<class Executor>
+__host__ __device__
+void test_move_only(Executor ex)
+{
+  using namespace cudex;
 
-    my_receiver r;
+  result = 0;
+  int expected = 13;
 
-    just_via(ex, move_only{expected}).connect(std::move(r)).start();
+  my_receiver r;
 
-    assert(expected == result);
-  }
+  just_via(ex, move_only{expected}).connect(std::move(r)).start();
+
+  assert(expected == result);
 }
 
 
@@ -138,15 +138,18 @@ struct gpu_executor
 
 void test_just_via()
 {
-  test(cudex::inline_executor{});
+  test_copyable(cudex::inline_executor{});
+  test_move_only(cudex::inline_executor{});
 
 #ifdef __CUDACC__
-  test(gpu_executor{});
+  test_copyable(gpu_executor{});
 
   device_invoke([] __device__ ()
   {
-    test(cudex::inline_executor{});
-    test(gpu_executor{});
+    test_copyable(cudex::inline_executor{});
+    test_move_only(cudex::inline_executor{});
+
+    test_copyable(gpu_executor{});
   });
   assert(cudaDeviceSynchronize() == cudaSuccess);
 #endif
