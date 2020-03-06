@@ -37,6 +37,11 @@ void test()
   f(expected);
 
   assert(expected == result);
+
+  auto g = as_invocable(std::move(r));
+
+  // test copy ctor
+  auto copy = g;
 }
 
 
