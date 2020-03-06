@@ -26,11 +26,63 @@
 
 #pragma once
 
-#include "prologue.hpp"
+#include "../prologue.hpp"
 
-#include "functional/apply.hpp"
-#include "functional/compose.hpp"
-#include "functional/invoke.hpp"
+#include <cstdint>
+#include <tuple>
+#include <type_traits>
+#include "../utility/index_sequence.hpp"
+#include "../tuple.hpp"
+#include "../type_traits.hpp"
+#include "invoke.hpp"
 
-#include "epilogue.hpp"
+CUDEX_NAMESPACE_OPEN_BRACE
+
+
+namespace detail
+{
+namespace apply_detail
+{
+
+
+template<class Invocable, class Tuple, std::size_t... Indices>
+CUDEX_ANNOTATION
+auto apply_impl(Invocable&& f, Tuple&& args, detail::index_sequence<Indices...>)
+  -> decltype(detail::invoke(std::forward<Invocable>(f), detail::get<Indices>(std::forward<Tuple>(args))...))
+{
+  return detail::invoke(std::forward<Invocable>(f), detail::get<Indices>(std::forward<Tuple>(args))...);
+}
+
+
+template<class Tuple>
+using tuple_indices_t = detail::make_index_sequence<std::tuple_size<decay_t<Tuple>>::value>;
+
+
+} // end apply_detail
+
+
+template<class Invocable, class Tuple>
+using apply_result_t = decltype(apply_detail::apply_impl(std::declval<Invocable>(), std::declval<Tuple>(), apply_detail::tuple_indices_t<Tuple>{}));
+
+
+template<class Invocable, class Tuple>
+using is_applicable = is_detected<apply_result_t, Invocable, Tuple>;
+
+
+template<class Invocable, class Tuple,
+         CUDEX_REQUIRES(is_applicable<Invocable&&,Tuple&&>::value)
+        >
+CUDEX_ANNOTATION
+apply_result_t<Invocable&&,Tuple&&> apply(Invocable&& f, Tuple&& args)
+{
+  return apply_detail::apply_impl(std::forward<Invocable>(f), std::forward<Tuple>(args), apply_detail::tuple_indices_t<Tuple>{});
+}
+
+
+} // end detail
+
+
+CUDEX_NAMESPACE_CLOSE_BRACE
+
+#include "../epilogue.hpp"
 
