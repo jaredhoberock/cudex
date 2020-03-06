@@ -104,6 +104,12 @@ class receiver_as_invocable
 
 
     CUDEX_ANNOTATION
+    receiver_as_invocable(const receiver_as_invocable& other) noexcept
+      : r_(other.r_), valid_(other.valid_)
+    {}
+
+
+    CUDEX_ANNOTATION
     ~receiver_as_invocable()
     {
       if(valid_)
