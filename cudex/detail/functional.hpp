@@ -29,6 +29,7 @@
 #include "prologue.hpp"
 
 #include "functional/apply.hpp"
+#include "functional/bind.hpp"
 #include "functional/compose.hpp"
 #include "functional/invoke.hpp"
 
