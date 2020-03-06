@@ -6,9 +6,27 @@
 #define __device__
 #endif
 
-struct my_receiver
+struct my_copyable_receiver
 {
   int& result;
+
+  __host__ __device__
+  void set_value(int value) noexcept
+  {
+    result = value;
+  }
+
+  void set_error(std::exception_ptr) {}
+
+  void set_done() noexcept {}
+};
+
+
+struct my_move_only_receiver
+{
+  int& result;
+
+  my_move_only_receiver(my_move_only_receiver&&) = default;
 
   __host__ __device__
   void set_value(int value) noexcept
@@ -27,21 +45,39 @@ void test()
 {
   using namespace cudex::detail;
 
-  int result = 0;
-  int expected = 13;
+  {
+    // test move-only receiver
+    int result = 0;
+    int expected = 13;
 
-  my_receiver r{result};
+    my_move_only_receiver r{result};
 
-  auto f = as_invocable(std::move(r));
+    auto f = as_invocable(std::move(r));
 
-  f(expected);
+    // test move ctor
+    auto g = std::move(f);
 
-  assert(expected == result);
+    g(expected);
 
-  auto g = as_invocable(std::move(r));
+    assert(expected == result);
+  }
 
-  // test copy ctor
-  auto copy = g;
+  {
+    // test copyable receiver
+    int result = 0;
+    int expected = 13;
+
+    my_copyable_receiver r{result};
+
+    auto f = as_invocable(r);
+
+    // test copy ctor
+    auto g = f;
+
+    g(expected);
+
+    assert(expected == result);
+  }
 }
 
 
