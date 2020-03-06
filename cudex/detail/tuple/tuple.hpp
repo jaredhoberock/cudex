@@ -69,6 +69,13 @@
 #endif
 
 
+// allow the user to define a singly-nested namespace for private implementation details
+#if !defined(TUPLE_DETAIL_NAMESPACE)
+#  define TUPLE_DETAIL_NAMESPACE detail
+#  define TUPLE_DETAIL_NAMESPACE_NEEDS_UNDEF
+#endif
+
+
 TUPLE_NAMESPACE_OPEN_BRACE
 
 // first declare tuple 
@@ -114,7 +121,7 @@ class tuple_size<TUPLE_NAMESPACE::tuple<Types...>>
 TUPLE_NAMESPACE_OPEN_BRACE
 
 
-namespace detail
+namespace TUPLE_DETAIL_NAMESPACE
 {
 
 // define variadic "and" operator 
@@ -563,15 +570,7 @@ class tuple_base<tuple_index_sequence<I...>, Types...>
 };
 
 
-} // end detail
-
-
-TUPLE_NAMESPACE_CLOSE_BRACE
-
-
-// implement std::get()
-namespace std
-{
+} // end TUPLE_DETAIL_NAMESPACE
 
 
 template<size_t i, class... UTypes>
@@ -599,23 +598,17 @@ typename std::tuple_element<i, TUPLE_NAMESPACE::tuple<UTypes...>>::type &&
 {
   using type = typename std::tuple_element<i, TUPLE_NAMESPACE::tuple<UTypes...>>::type;
 
-  auto&& leaf = static_cast<TUPLE_NAMESPACE::detail::tuple_leaf<i,type>&&>(t.base());
+  auto&& leaf = static_cast<TUPLE_NAMESPACE::TUPLE_DETAIL_NAMESPACE::tuple_leaf<i,type>&&>(t.base());
 
   return static_cast<type&&>(leaf.mutable_get());
 }
-
-
-} // end std
-
-
-TUPLE_NAMESPACE_OPEN_BRACE
 
 
 template<class... Types>
 class tuple
 {
   private:
-    using base_type = detail::tuple_base<detail::tuple_make_index_sequence<sizeof...(Types)>, Types...>;
+    using base_type = TUPLE_DETAIL_NAMESPACE::tuple_base<TUPLE_DETAIL_NAMESPACE::tuple_make_index_sequence<sizeof...(Types)>, Types...>;
     base_type base_;
 
     TUPLE_ANNOTATION
@@ -642,7 +635,7 @@ class tuple
     template<class... UTypes,
              class = typename std::enable_if<
                (sizeof...(Types) == sizeof...(UTypes)) &&
-               detail::tuple_and<
+               TUPLE_DETAIL_NAMESPACE::tuple_and<
                  std::is_constructible<Types,UTypes&&>...
                >::value
              >::type>
@@ -654,7 +647,7 @@ class tuple
     template<class... UTypes,
              class = typename std::enable_if<
                (sizeof...(Types) == sizeof...(UTypes)) &&
-                 detail::tuple_and<
+                 TUPLE_DETAIL_NAMESPACE::tuple_and<
                    std::is_constructible<Types,const UTypes&>...
                  >::value
              >::type>
@@ -666,7 +659,7 @@ class tuple
     template<class... UTypes,
              class = typename std::enable_if<
                (sizeof...(Types) == sizeof...(UTypes)) &&
-                 detail::tuple_and<
+                 TUPLE_DETAIL_NAMESPACE::tuple_and<
                    std::is_constructible<Types,UTypes&&>...
                  >::value
              >::type>
@@ -678,9 +671,9 @@ class tuple
     template<class UType1, class UType2,
              class = typename std::enable_if<
                (sizeof...(Types) == 2) &&
-               detail::tuple_and<
-                 std::is_constructible<detail::tuple_type_at<                            0,Types...>,const UType1&>,
-                 std::is_constructible<detail::tuple_type_at<sizeof...(Types) == 2 ? 1 : 0,Types...>,const UType2&>
+               TUPLE_DETAIL_NAMESPACE::tuple_and<
+                 std::is_constructible<TUPLE_DETAIL_NAMESPACE::tuple_type_at<                            0,Types...>,const UType1&>,
+                 std::is_constructible<TUPLE_DETAIL_NAMESPACE::tuple_type_at<sizeof...(Types) == 2 ? 1 : 0,Types...>,const UType2&>
                >::value
              >::type>
     TUPLE_ANNOTATION
@@ -691,9 +684,9 @@ class tuple
     template<class UType1, class UType2,
              class = typename std::enable_if<
                (sizeof...(Types) == 2) &&
-               detail::tuple_and<
-                 std::is_constructible<detail::tuple_type_at<                            0,Types...>,UType1&&>,
-                 std::is_constructible<detail::tuple_type_at<sizeof...(Types) == 2 ? 1 : 0,Types...>,UType2&&>
+               TUPLE_DETAIL_NAMESPACE::tuple_and<
+                 std::is_constructible<TUPLE_DETAIL_NAMESPACE::tuple_type_at<                            0,Types...>,UType1&&>,
+                 std::is_constructible<TUPLE_DETAIL_NAMESPACE::tuple_type_at<sizeof...(Types) == 2 ? 1 : 0,Types...>,UType2&&>
                >::value
              >::type>
     TUPLE_ANNOTATION
@@ -714,7 +707,7 @@ class tuple
     //template<class... UTypes,
     //         class = typename std::enable_if<
     //           (sizeof...(Types) == sizeof...(UTypes)) &&
-    //             detail::tuple_and<
+    //             TUPLE_DETAIL_NAMESPACE::tuple_and<
     //               std::is_constructible<Types,const UTypes&>...
     //             >::value
     //         >::type>
@@ -758,9 +751,9 @@ class tuple
     template<class UType1, class UType2,
              class = typename std::enable_if<
                (sizeof...(Types) == 2) &&
-               detail::tuple_and<
-                 std::is_assignable<detail::tuple_type_at<                            0,Types...>,const UType1&>,
-                 std::is_assignable<detail::tuple_type_at<sizeof...(Types) == 2 ? 1 : 0,Types...>,const UType2&>
+               TUPLE_DETAIL_NAMESPACE::tuple_and<
+                 std::is_assignable<TUPLE_DETAIL_NAMESPACE::tuple_type_at<                            0,Types...>,const UType1&>,
+                 std::is_assignable<TUPLE_DETAIL_NAMESPACE::tuple_type_at<sizeof...(Types) == 2 ? 1 : 0,Types...>,const UType2&>
                >::value
              >::type>
     TUPLE_ANNOTATION
@@ -773,9 +766,9 @@ class tuple
     template<class UType1, class UType2,
              class = typename std::enable_if<
                (sizeof...(Types) == 2) &&
-               detail::tuple_and<
-                 std::is_assignable<detail::tuple_type_at<                            0,Types...>,UType1&&>,
-                 std::is_assignable<detail::tuple_type_at<sizeof...(Types) == 2 ? 1 : 0,Types...>,UType2&&>
+               TUPLE_DETAIL_NAMESPACE::tuple_and<
+                 std::is_assignable<TUPLE_DETAIL_NAMESPACE::tuple_type_at<                            0,Types...>,UType1&&>,
+                 std::is_assignable<TUPLE_DETAIL_NAMESPACE::tuple_type_at<sizeof...(Types) == 2 ? 1 : 0,Types...>,UType2&&>
                >::value
              >::type>
     TUPLE_ANNOTATION
@@ -795,7 +788,7 @@ class tuple
     //template<class... UTypes,
     //         class = typename std::enable_if<
     //           (sizeof...(Types) == sizeof...(UTypes)) &&
-    //           detail::tuple_and<
+    //           TUPLE_DETAIL_NAMESPACE::tuple_and<
     //             std::is_constructible<Types,const UTypes&>...
     //            >::value
     //         >::type>
@@ -827,19 +820,19 @@ class tuple
     template<size_t i, class... UTypes>
     friend TUPLE_ANNOTATION
     typename std::tuple_element<i, TUPLE_NAMESPACE::tuple<UTypes...>>::type &
-    std::get(TUPLE_NAMESPACE::tuple<UTypes...>& t);
+    get(TUPLE_NAMESPACE::tuple<UTypes...>& t);
 
 
     template<size_t i, class... UTypes>
     friend TUPLE_ANNOTATION
     const typename std::tuple_element<i, TUPLE_NAMESPACE::tuple<UTypes...>>::type &
-    std::get(const TUPLE_NAMESPACE::tuple<UTypes...>& t);
+    get(const TUPLE_NAMESPACE::tuple<UTypes...>& t);
 
 
     template<size_t i, class... UTypes>
     friend TUPLE_ANNOTATION
     typename std::tuple_element<i, TUPLE_NAMESPACE::tuple<UTypes...>>::type &&
-    std::get(TUPLE_NAMESPACE::tuple<UTypes...>&& t);
+    get(TUPLE_NAMESPACE::tuple<UTypes...>&& t);
 };
 
 
@@ -884,7 +877,7 @@ TUPLE_NAMESPACE::tuple<Args&&...> forward_as_tuple(Args&&... args)
 }
 
 
-namespace detail
+namespace TUPLE_DETAIL_NAMESPACE
 {
 
 
@@ -899,13 +892,13 @@ struct tuple_ignore_t
 };
 
 
-} // end detail
+} // end TUPLE_DETAIL_NAMESPACE
 
 
-constexpr detail::tuple_ignore_t ignore{};
+constexpr TUPLE_DETAIL_NAMESPACE::tuple_ignore_t ignore{};
 
 
-namespace detail
+namespace TUPLE_DETAIL_NAMESPACE
 {
 
 
@@ -935,21 +928,15 @@ struct tuple_find_exactly_one : tuple_find_exactly_one_impl<0,T,Types...>
 };
 
 
-} // end detail
+} // end TUPLE_DETAIL_NAMESPACE
 
 
-} // end namespace
-
-
-// implement std::get()
-namespace std
-{
 
 template<class T, class... Types>
 TUPLE_ANNOTATION
 T& get(TUPLE_NAMESPACE::tuple<Types...>& t)
 {
-  return std::get<TUPLE_NAMESPACE::detail::tuple_find_exactly_one<T,Types...>::value>(t);
+  return TUPLE_NAMESPACE::get<TUPLE_NAMESPACE::TUPLE_DETAIL_NAMESPACE::tuple_find_exactly_one<T,Types...>::value>(t);
 }
 
 
@@ -957,7 +944,7 @@ template<class T, class... Types>
 TUPLE_ANNOTATION
 const T& get(const TUPLE_NAMESPACE::tuple<Types...>& t)
 {
-  return std::get<TUPLE_NAMESPACE::detail::tuple_find_exactly_one<T,Types...>::value>(t);
+  return TUPLE_NAMESPACE::get<TUPLE_NAMESPACE::TUPLE_DETAIL_NAMESPACE::tuple_find_exactly_one<T,Types...>::value>(t);
 }
 
 
@@ -965,19 +952,12 @@ template<class T, class... Types>
 TUPLE_ANNOTATION
 T&& get(TUPLE_NAMESPACE::tuple<Types...>&& t)
 {
-  return std::get<TUPLE_NAMESPACE::detail::tuple_find_exactly_one<T,Types...>::value>(std::move(t));
+  return TUPLE_NAMESPACE::get<TUPLE_NAMESPACE::TUPLE_DETAIL_NAMESPACE::tuple_find_exactly_one<T,Types...>::value>(std::move(t));
 }
 
 
-} // end std
-
-
-
-TUPLE_NAMESPACE_OPEN_BRACE
-
-
 // relational operators
-namespace detail
+namespace TUPLE_DETAIL_NAMESPACE
 {
 
 
@@ -999,11 +979,11 @@ template<typename... Bools>
 TUPLE_ANNOTATION
 bool tuple_all(bool t, Bools... ts)
 {
-  return t && detail::tuple_all(ts...);
+  return t && TUPLE_DETAIL_NAMESPACE::tuple_all(ts...);
 }
 
 
-} // end detail
+} // end TUPLE_DETAIL_NAMESPACE
 
 
 template<class... TTypes, class... UTypes>
@@ -1011,26 +991,26 @@ TUPLE_ANNOTATION
 bool operator==(const tuple<TTypes...>& t, const tuple<UTypes...>& u);
 
 
-namespace detail
+namespace TUPLE_DETAIL_NAMESPACE
 {
 
 
 template<class... TTypes, class... UTypes, size_t... I>
 TUPLE_ANNOTATION
-bool tuple_eq(const tuple<TTypes...>& t, const tuple<UTypes...>& u, detail::tuple_index_sequence<I...>)
+bool tuple_eq(const tuple<TTypes...>& t, const tuple<UTypes...>& u, TUPLE_DETAIL_NAMESPACE::tuple_index_sequence<I...>)
 {
-  return detail::tuple_all((std::get<I>(t) == std::get<I>(u))...);
+  return TUPLE_DETAIL_NAMESPACE::tuple_all((TUPLE_NAMESPACE::get<I>(t) == TUPLE_NAMESPACE::get<I>(u))...);
 }
 
 
-} // end detail
+} // end TUPLE_DETAIL_NAMESPACE
 
 
 template<class... TTypes, class... UTypes>
 TUPLE_ANNOTATION
 bool operator==(const tuple<TTypes...>& t, const tuple<UTypes...>& u)
 {
-  return detail::tuple_eq(t, u, detail::tuple_make_index_sequence<sizeof...(TTypes)>{});
+  return TUPLE_DETAIL_NAMESPACE::tuple_eq(t, u, TUPLE_DETAIL_NAMESPACE::tuple_make_index_sequence<sizeof...(TTypes)>{});
 }
 
 
@@ -1039,7 +1019,7 @@ TUPLE_ANNOTATION
 bool operator<(const tuple<TTypes...>& t, const tuple<UTypes...>& u);
 
 
-namespace detail
+namespace TUPLE_DETAIL_NAMESPACE
 {
 
 
@@ -1055,20 +1035,20 @@ template<size_t I, class... TTypes, class... UTypes, size_t... Is>
 TUPLE_ANNOTATION
 bool tuple_lt(const tuple<TTypes...>& t, const tuple<UTypes...>& u, tuple_index_sequence<I, Is...>)
 {
-  return (std::get<I>(t) < std::get<I>(u)
-          or (!(std::get<I>(u) < std::get<I>(t))
-          and detail::tuple_lt(t, u, typename tuple_make_index_sequence_impl<I+1, tuple_index_sequence<>, sizeof...(TTypes)>::type{})));
+  return (TUPLE_NAMESPACE::get<I>(t) < TUPLE_NAMESPACE::get<I>(u)
+          or (!(TUPLE_NAMESPACE::get<I>(u) < TUPLE_NAMESPACE::get<I>(t))
+          and TUPLE_DETAIL_NAMESPACE::tuple_lt(t, u, typename tuple_make_index_sequence_impl<I+1, tuple_index_sequence<>, sizeof...(TTypes)>::type{})));
 }
 
 
-} // end detail
+} // end TUPLE_DETAIL_NAMESPACE
 
 
 template<class... TTypes, class... UTypes>
 TUPLE_ANNOTATION
 bool operator<(const tuple<TTypes...>& t, const tuple<UTypes...>& u)
 {
-  return detail::tuple_lt(t, u, detail::tuple_make_index_sequence<sizeof...(TTypes)>{});
+  return TUPLE_DETAIL_NAMESPACE::tuple_lt(t, u, TUPLE_DETAIL_NAMESPACE::tuple_make_index_sequence<sizeof...(TTypes)>{});
 }
 
 
@@ -1108,15 +1088,20 @@ TUPLE_NAMESPACE_CLOSE_BRACE
 
 
 #ifdef TUPLE_ANNOTATION_NEEDS_UNDEF
-#undef TUPLE_ANNOTATION
-#undef TUPLE_ANNOTATION_NEEDS_UNDEF
+#  undef TUPLE_ANNOTATION
+#  undef TUPLE_ANNOTATION_NEEDS_UNDEF
 #endif
 
 #ifdef TUPLE_NAMESPACE_NEEDS_UNDEF
-#undef TUPLE_NAMESPACE
-#undef TUPLE_NAMESPACE_OPEN_BRACE
-#undef TUPLE_NAMESPACE_CLOSE_BRACE
-#undef TUPLE_NAMESPACE_NEEDS_UNDEF
+#  undef TUPLE_NAMESPACE
+#  undef TUPLE_NAMESPACE_OPEN_BRACE
+#  undef TUPLE_NAMESPACE_CLOSE_BRACE
+#  undef TUPLE_NAMESPACE_NEEDS_UNDEF
+#endif
+
+#ifdef TUPLE_DETAIL_NAMESPACE_NEEDS_UNDEF
+#  undef TUPLE_DETAIL_NAMESPACE
+#  undef TUPLE_DETAIL_NAMESPACE_NEEDS_UNDEF
 #endif
 
 #undef TUPLE_EXEC_CHECK_DISABLE

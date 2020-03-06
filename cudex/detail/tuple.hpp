@@ -28,19 +28,21 @@
 
 #include "prologue.hpp"
 
+
 #define TUPLE_NAMESPACE cudex::detail
 #define TUPLE_NAMESPACE_OPEN_BRACE namespace cudex { namespace detail {
 #define TUPLE_NAMESPACE_CLOSE_BRACE } }
-
+#define TUPLE_DETAIL_NAMESPACE tuple_detail
 #define TUPLE_ANNOTATION CUDEX_ANNOTATION
-#define TUPLE_EXEC_CHECK_DISABLE CUDEX_EXEC_CHECK_DISABLE
+
 
 #include "tuple/tuple.hpp"
+
 
 #undef TUPLE_NAMESPACE
 #undef TUPLE_NAMESPACE_OPEN_BRACE
 #undef TUPLE_NAMESPACE_CLOSE_BRACE
-
+#undef TUPLE_DETAIL_NAMESPACE
 #undef TUPLE_ANNOTATION
 #undef TUPLE_EXEC_CHECK_DISABLE
 
