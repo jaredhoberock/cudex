@@ -31,9 +31,23 @@ struct my_receiver
 };
 
 
+struct move_only_invocable
+{
+  int result;
+
+  move_only_invocable(move_only_invocable&&) = default;
+
+  __host__ __device__
+  int operator()() const
+  {
+    return result;
+  }
+};
+
+
 template<class Executor>
 __host__ __device__
-void test(Executor ex)
+void test_variadicity(Executor ex)
 {
   using namespace cudex;
 
@@ -82,6 +96,27 @@ void test(Executor ex)
     assert(expected == result);
   }
 }
+
+
+template<class Executor>
+__host__ __device__
+void test_move_only_invocable(Executor ex)
+{
+  using namespace cudex;
+
+  // test with move-only invocable
+
+  result = 0;
+  int expected = 13;
+
+  my_receiver r;
+
+  move_only_invocable return_expected{13};
+  invoke_via(ex, std::move(return_expected)).connect(std::move(r)).start();
+
+  assert(expected == result);
+}
+
 
 
 template<class F>
@@ -143,15 +178,18 @@ struct gpu_executor
 
 void test_invoke_via()
 {
-  test(cudex::inline_executor{});
+  test_variadicity(cudex::inline_executor{});
+  test_move_only_invocable(cudex::inline_executor{});
 
 #ifdef __CUDACC__
-  test(gpu_executor{});
+  test_variadicity(gpu_executor{});
 
   device_invoke([] __device__ ()
   {
-    test(cudex::inline_executor{});
-    test(gpu_executor{});
+    test_variadicity(cudex::inline_executor{});
+    test_move_only_invocable(cudex::inline_executor{});
+
+    test_variadicity(gpu_executor{});
   });
   assert(cudaDeviceSynchronize() == cudaSuccess);
 #endif

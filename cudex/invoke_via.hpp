@@ -59,6 +59,8 @@ class send_invocation_result
 
     send_invocation_result(const send_invocation_result&) = default;
 
+    send_invocation_result(send_invocation_result&&) = default;
+
     // the type of operation returned by connect
     template<class Receiver>
     using operation = execute_operation<
