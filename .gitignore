@@ -1,0 +1,22 @@
+# ignore all files, so that we can ignore executables created by build systems
+*
+
+# don't ignore directories, so we can recurse into them
+!*/
+
+# don't ignore files that have an extension
+!*.*
+
+# ignore .cpp files underneath tests subdirectory
+tests/**/*.cpp
+
+# ignore intermediate files introduced by build systems
+*.o
+*.out
+
+# don't ignore Makefiles
+!**/Makefile
+
+# ignore files produced by compiler diagnostics (typically named errors.txt)
+*.txt
+
