@@ -78,7 +78,7 @@ struct const_invocable2
 };
 
 
-struct move_invocable1
+struct rvalue_invocable1
 {
   int addend;
 
@@ -96,7 +96,7 @@ struct move_invocable1
 };
 
 
-struct move_invocable2
+struct rvalue_invocable2
 {
   __host__ __device__
   int operator()(int x, int y) &&
@@ -106,6 +106,56 @@ struct move_invocable2
 
   __host__ __device__
   void operator()(int) && {}
+};
+
+
+struct copyable_invocable1
+{
+  int addend;
+
+  __host__ __device__
+  int operator()(int arg)
+  {
+    return addend + arg;
+  }
+};
+
+
+struct copyable_invocable2
+{
+  __host__ __device__
+  int operator()(int x, int y)
+  {
+    return x + y;
+  }
+};
+
+
+struct move_only_invocable1
+{
+  move_only_invocable1(move_only_invocable1&&) = default;
+
+  int addend;
+
+  __host__ __device__
+  int operator()(int arg)
+  {
+    return addend + arg;
+  }
+};
+
+
+struct move_only_invocable2
+{
+  move_only_invocable2() = default;
+
+  move_only_invocable2(move_only_invocable2&&) = default;
+
+  __host__ __device__
+  int operator()(int x, int y)
+  {
+    return x + y;
+  }
 };
 
 
@@ -153,8 +203,8 @@ void test()
   {
     int expected = 13 + 7 + 42;
 
-    move_invocable1 f{13};
-    move_invocable2 g;
+    rvalue_invocable1 f{13};
+    rvalue_invocable2 g;
 
     // test g returning non-void case
     auto f_of_g = compose(f,g);
@@ -165,6 +215,38 @@ void test()
     // test g returning void case
     expected = 13;
     result = std::move(f_of_g)(7);
+    assert(expected == result);
+  }
+
+  {
+    // test move-only invocables
+    int expected = 13 + 7 + 42;
+
+    move_only_invocable1 f{13};
+    move_only_invocable2 g;
+
+    auto f_of_g = compose(std::move(f), std::move(g));
+
+    // test move ctor
+    auto f_of_g_moved = std::move(f_of_g);
+    int result = f_of_g_moved(7,42);
+
+    assert(expected == result);
+  }
+
+  {
+    // test copyable invocables
+    int expected = 13 + 7 + 42;
+
+    copyable_invocable1 f{13};
+    copyable_invocable2 g;
+
+    auto f_of_g = compose(f, g);
+
+    // test copy ctor
+    auto f_of_g_copy = f_of_g;
+    int result = f_of_g_copy(7,42);
+
     assert(expected == result);
   }
 }

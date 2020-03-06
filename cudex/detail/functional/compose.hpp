@@ -94,6 +94,10 @@ class function_composition
         g_(std::forward<OtherInvocable2>(g))
     {}
 
+    function_composition(const function_composition&) = default;
+
+    function_composition(function_composition&&) = default;
+
     template<class... Args,
              CUDEX_REQUIRES(is_composition_invocable<Invocable1&, Invocable2&, Args&&...>::value)
             >
