@@ -42,7 +42,7 @@ struct const_invocable
 };
 
 
-struct move_invocable
+struct rvalue_invocable
 {
   int& result;
   int value;
@@ -91,7 +91,7 @@ void test()
     int result = 0;
     int expected = 13;
 
-    const_invocable f{result, expected};
+    rvalue_invocable f{result, expected};
     auto op = make_execute_operation(ex, f);
 
     std::move(op).start();
