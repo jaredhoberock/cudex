@@ -18,6 +18,7 @@ struct my_copyable_receiver
 
   void set_error(std::exception_ptr) {}
 
+  __host__ __device__
   void set_done() noexcept {}
 };
 
@@ -36,6 +37,7 @@ struct my_move_only_receiver
 
   void set_error(std::exception_ptr) {}
 
+  __host__ __device__
   void set_done() noexcept {}
 };
 
