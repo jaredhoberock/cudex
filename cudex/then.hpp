@@ -29,12 +29,9 @@
 #include "detail/prologue.hpp"
 
 #include <utility>
-#include "detail/execution.hpp"
-#include "detail/functional/invoke.hpp"
-#include "detail/type_traits/decay.hpp"
-#include "detail/type_traits/invoke_result.hpp"
-#include "detail/type_traits/is_nothrow_invocable.hpp"
-#include "detail/type_traits/is_nothrow_receiver_of.hpp"
+#include "detail/default_then.hpp"
+#include "detail/static_const.hpp"
+#include "detail/type_traits/has_then.hpp"
 
 
 CUDEX_NAMESPACE_OPEN_BRACE
@@ -44,107 +41,64 @@ namespace detail
 {
 
 
-template<class Receiver, class Function>
-class then_receiver
+// this is the type of then
+struct then_customization_point
 {
-  public:
-    CUDEX_ANNOTATION
-    then_receiver(Receiver receiver, Function f)
-      : receiver_(std::move(receiver)), f_(std::move(f))
-    {}
-
-    template<class... Args, class Result = invoke_result_t<Function, Args...>,
-             CUDEX_REQUIRES(execution::is_receiver_of<Receiver, Result>::value)
-            >
-    CUDEX_ANNOTATION
-    void set_value(Args&&... args) &&
-        noexcept(is_nothrow_invocable<Function, Args...>::value and is_nothrow_receiver_of<Receiver, Result>::value)
-    {
-      execution::set_value(std::move(receiver_), detail::invoke(std::move(f_), std::forward<Args>(args)...));
-    }
-
-//    template<class... Argss, class Ret = invoke_result_t<F, As...>>
-//        requires receiver_of<R> && std::is_void_v<Ret>
-//    void set_value(Argss&&... args) &&
-//        noexcept(std::is_nothrow_invocable_v<F, As...> &&
-//            is_nothrow_receiver_of_v<R>)
-//    {
-//      std::invoke(std::move(f_), std::forward<Args>(args)...);
-//      execution::set_value(std::move(receiver_));
-//    }
-
-    template<class Error,
-             CUDEX_REQUIRES(execution::is_receiver<Receiver, Error>::value)
-            >
-    CUDEX_ANNOTATION
-    void set_error(Error&& error) && noexcept
-    {
-      execution::set_error(std::move(receiver_), std::forward<Error>(error));
-    }
-
-    CUDEX_ANNOTATION
-    void set_done() && noexcept
-    {
-      execution::set_done(std::move(receiver_));
-    }
-
-  private:
-    Receiver receiver_;
-    Function f_;
-};
+  CUDEX_EXEC_CHECK_DISABLE
+  template<class S, class F,
+           CUDEX_REQUIRES(has_then_member_function<S&&,F&&>::value)
+          >
+  CUDEX_ANNOTATION
+  constexpr auto operator()(S&& s, F&& f) const ->
+    decltype(std::forward<S>(s).then(std::forward<F>(f)))
+  {
+    return std::forward<S>(s).then(std::forward<F>(f));
+  }
 
 
-template<class Receiver, class Function>
-CUDEX_ANNOTATION
-then_receiver<decay_t<Receiver>, decay_t<Function>> make_then_receiver(Receiver&& receiver, Function&& continuation)
-{
-  return {std::forward<Receiver>(receiver), std::forward<Function>(continuation)};
-}
+  CUDEX_EXEC_CHECK_DISABLE
+  template<class S, class F,
+           CUDEX_REQUIRES(!has_then_member_function<S&&,F&&>::value),
+           CUDEX_REQUIRES(has_then_free_function<S&&,F&&>::value)
+          >
+  CUDEX_ANNOTATION
+  constexpr auto operator()(S&& s, F&& f) const ->
+    decltype(then(std::forward<S>(s), std::forward<F>(f)))
+  {
+    return then(std::forward<S>(s), std::forward<F>(f));
+  }
 
 
-template<class Sender, class Function>
-class then_sender
-{
-  private:
-    Sender predecessor_;
-    Function continuation_;
-
-  public:
-    template<class OtherSender, class OtherFunction,
-             CUDEX_REQUIRES(std::is_constructible<Sender,OtherSender&&>::value),
-             CUDEX_REQUIRES(std::is_constructible<Function,OtherFunction&&>::value)
-            >
-    CUDEX_ANNOTATION
-    then_sender(OtherSender&& predecessor, OtherFunction&& continuation)
-      : predecessor_(std::forward<OtherSender>(predecessor)), continuation_(std::forward<OtherFunction>(continuation))
-    {}
-
-    then_sender(const then_sender&) = default;
-
-    then_sender(then_sender&&) = default;
-
-    template<class Receiver,
-             CUDEX_REQUIRES(execution::is_sender_to<Sender, then_receiver<Receiver, Function>>::value)
-            >
-    CUDEX_ANNOTATION
-    auto connect(Receiver&& r) &&
-      -> decltype(execution::connect(std::move(predecessor_), detail::make_then_receiver(std::move(r), std::move(continuation_))))
-    {
-      return execution::connect(std::move(predecessor_), detail::make_then_receiver(std::move(r), std::move(continuation_)));
-    }
+  CUDEX_EXEC_CHECK_DISABLE
+  template<class S, class F,
+           CUDEX_REQUIRES(!has_then_member_function<S&&,F&&>::value),
+           CUDEX_REQUIRES(!has_then_free_function<S&&,F&&>::value)
+          >
+  CUDEX_ANNOTATION
+  constexpr auto operator()(S&& s, F&& f) const ->
+    decltype(detail::default_then(std::forward<S>(s), std::forward<F>(f)))
+  {
+    return detail::default_then(std::forward<S>(s), std::forward<F>(f));
+  }
 };
 
 
 } // end detail
 
 
-template<class Sender, class Function>
-CUDEX_ANNOTATION
-detail::then_sender<detail::decay_t<Sender>, detail::decay_t<Function>>
-  then(Sender&& predecessor, Function&& continuation)
+namespace
 {
-  return {std::forward<Sender>(predecessor), std::forward<Function>(continuation)};
-}
+
+
+// define the then customization point object
+#ifndef __CUDA_ARCH__
+constexpr auto const& then = detail::static_const<detail::then_customization_point>::value;
+#else
+const __device__ detail::then_customization_point then;
+#endif
+
+
+} // end anonymous namespace
 
 
 CUDEX_NAMESPACE_CLOSE_BRACE
