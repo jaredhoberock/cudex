@@ -62,7 +62,7 @@ class receiver_as_invocable
       try : r_(detail::move_if_noexcept(r)), valid_(true) {}
       catch(...)
       {
-        execution::set_error(r, std::current_exception());
+        execution::set_error(detail::move_if_noexcept(r), std::current_exception());
       }
 #else
       : r_(detail::move_if_noexcept(r)), valid_(true) {}
@@ -91,7 +91,8 @@ class receiver_as_invocable
       }
       catch(...)
       {
-        execution::set_error(other.receiver_, std::current_exception());
+        execution::set_error(detail::move_if_noexcept(other.r_), std::current_exception());
+        other.valid_ = false;
       }
 #else
     CUDEX_ANNOTATION
@@ -114,7 +115,7 @@ class receiver_as_invocable
     {
       if(valid_)
       {
-        execution::set_done(r_);
+        execution::set_done(std::move(r_));
       }
     }
 
@@ -128,11 +129,11 @@ class receiver_as_invocable
     {
       try
       {
-        execution::set_value(r_, std::forward<Args>(args)...);
+        execution::set_value(std::move(r_), std::forward<Args>(args)...);
       }
       catch(...)
       {
-        execution::set_error(r_, std::current_exception());
+        execution::set_error(std::move(r_), std::current_exception());
       }
 
       valid_ = false;
@@ -144,7 +145,7 @@ class receiver_as_invocable
     CUDEX_ANNOTATION
     void operator()(Args&&... args)
     {
-      execution::set_value(r_, std::forward<Args>(args)...);
+      execution::set_value(std::move(r_), std::forward<Args>(args)...);
       valid_ = false;
     }
 #endif
