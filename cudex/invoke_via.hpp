@@ -30,7 +30,7 @@
 
 #include <type_traits>
 #include <utility>
-#include "detail/chaining_sender.hpp"
+#include "chaining_sender.hpp"
 #include "detail/execute_operation.hpp"
 #include "detail/functional/bind.hpp"
 #include "detail/functional/compose.hpp"
@@ -95,7 +95,7 @@ template<class Executor, class Invocable,
          CUDEX_REQUIRES(detail::execution::is_executor_of<Executor,Invocable>::value)
         >
 CUDEX_ANNOTATION
-detail::chaining_sender<detail::invoke_sender<Executor, typename std::decay<Invocable>::type>>
+chaining_sender<detail::invoke_sender<Executor, typename std::decay<Invocable>::type>>
   invoke_via(const Executor& ex, Invocable&& f)
 {
   detail::invoke_sender<Executor, typename std::decay<Invocable>::type> result{ex, std::forward<Invocable>(f)};

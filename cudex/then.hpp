@@ -29,8 +29,8 @@
 #include "detail/prologue.hpp"
 
 #include <utility>
-#include "detail/chaining_sender.hpp"
-#include "detail/dispatch_then.hpp"
+#include "chaining_sender.hpp"
+#include "detail/combinators/dispatch/dispatch_then.hpp"
 #include "detail/static_const.hpp"
 
 

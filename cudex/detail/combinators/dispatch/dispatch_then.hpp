@@ -26,10 +26,10 @@
 
 #pragma once
 
-#include "prologue.hpp"
+#include "../../../detail/prologue.hpp"
 
 #include <utility>
-#include "default_then.hpp"
+#include "../default/default_then.hpp"
 
 
 CUDEX_NAMESPACE_OPEN_BRACE
@@ -106,5 +106,5 @@ using can_dispatch_then = is_detected<dispatch_then_t, S, F>;
 CUDEX_NAMESPACE_CLOSE_BRACE
 
 
-#include "epilogue.hpp"
+#include "../../../detail/epilogue.hpp"
 

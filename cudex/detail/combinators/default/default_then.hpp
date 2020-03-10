@@ -26,15 +26,15 @@
 
 #pragma once
 
-#include "prologue.hpp"
+#include "../../prologue.hpp"
 
 #include <utility>
-#include "execution.hpp"
-#include "functional/invoke.hpp"
-#include "type_traits/decay.hpp"
-#include "type_traits/invoke_result.hpp"
-#include "type_traits/is_nothrow_invocable.hpp"
-#include "type_traits/is_nothrow_receiver_of.hpp"
+#include "../../execution.hpp"
+#include "../../functional/invoke.hpp"
+#include "../../type_traits/decay.hpp"
+#include "../../type_traits/invoke_result.hpp"
+#include "../../type_traits/is_nothrow_invocable.hpp"
+#include "../../type_traits/is_nothrow_receiver_of.hpp"
 
 
 CUDEX_NAMESPACE_OPEN_BRACE
@@ -152,4 +152,6 @@ detail::then_sender<detail::decay_t<Sender>, detail::decay_t<Function>>
 
 
 CUDEX_NAMESPACE_CLOSE_BRACE
+
+#include "../../epilogue.hpp"
 

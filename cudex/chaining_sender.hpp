@@ -26,22 +26,18 @@
 
 #pragma once
 
-#include "prologue.hpp"
+#include "detail/prologue.hpp"
 
 #include <type_traits>
 #include <utility>
-#include "dispatch_then.hpp"
-#include "execution.hpp"
+#include "detail/combinators/dispatch/dispatch_then.hpp"
+#include "detail/execution.hpp"
 
 
 CUDEX_NAMESPACE_OPEN_BRACE
 
 
-namespace detail
-{
-
-
-// this template wraps another sender and introduces member functions for convenient chaining
+// this template wraps another sender and introduces convenient chaining via member functions
 template<class Sender>
 class chaining_sender
 {
@@ -65,27 +61,27 @@ class chaining_sender
     template<class Receiver>
     CUDEX_ANNOTATION
     auto connect(Receiver&& receiver) &&
-      -> decltype(execution::connect(std::move(sender_), std::forward<Receiver>(receiver)))
+      -> decltype(detail::execution::connect(std::move(sender_), std::forward<Receiver>(receiver)))
     {
-      return execution::connect(std::move(sender_), std::forward<Receiver>(receiver));
+      return detail::execution::connect(std::move(sender_), std::forward<Receiver>(receiver));
     }
 
 
     template<class Receiver,
-             CUDEX_REQUIRES(execution::is_sender_to<Sender&&,Receiver&&>::value)
+             CUDEX_REQUIRES(detail::execution::is_sender_to<Sender&&,Receiver&&>::value)
             >
     CUDEX_ANNOTATION
     void submit(Receiver&& receiver) &&
     {
-      execution::submit(std::move(sender_), std::forward<Receiver>(receiver));
+      detail::execution::submit(std::move(sender_), std::forward<Receiver>(receiver));
     }
 
 
     template<class Function,
-             CUDEX_REQUIRES(can_dispatch_then<Sender&&,Function&&>::value)
+             CUDEX_REQUIRES(detail::can_dispatch_then<Sender&&,Function&&>::value)
             >
     CUDEX_ANNOTATION
-    chaining_sender<dispatch_then_t<Sender&&,Function&&>>
+    chaining_sender<detail::dispatch_then_t<Sender&&,Function&&>>
       then(Function&& continuation) &&
     {
       return {detail::dispatch_then(std::move(sender_), std::forward<Function>(continuation))};
@@ -93,9 +89,7 @@ class chaining_sender
 };
 
 
-} // end detail
-
 CUDEX_NAMESPACE_CLOSE_BRACE
 
-#include "epilogue.hpp"
+#include "detail/epilogue.hpp"
 
