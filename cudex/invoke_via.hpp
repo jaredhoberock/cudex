@@ -30,6 +30,7 @@
 
 #include <type_traits>
 #include <utility>
+#include "detail/chaining_sender.hpp"
 #include "detail/execute_operation.hpp"
 #include "detail/functional/bind.hpp"
 #include "detail/functional/compose.hpp"
@@ -46,20 +47,20 @@ namespace detail
 
 // this is a sender that invokes a function via an executor and sends the result to a receiver
 template<class Executor, class Invocable>
-class send_invocation_result
+class invoke_sender
 {
   public:
     template<class OtherInvocable,
              CUDEX_REQUIRES(std::is_constructible<Invocable,OtherInvocable&&>::value)
             >
     CUDEX_ANNOTATION
-    send_invocation_result(const Executor& ex, OtherInvocable&& invocable)
+    invoke_sender(const Executor& ex, OtherInvocable&& invocable)
       : ex_(ex), invocable_(std::forward<OtherInvocable>(invocable))
     {}
 
-    send_invocation_result(const send_invocation_result&) = default;
+    invoke_sender(const invoke_sender&) = default;
 
-    send_invocation_result(send_invocation_result&&) = default;
+    invoke_sender(invoke_sender&&) = default;
 
     // the type of operation returned by connect
     template<class Receiver>
@@ -94,9 +95,11 @@ template<class Executor, class Invocable,
          CUDEX_REQUIRES(detail::execution::is_executor_of<Executor,Invocable>::value)
         >
 CUDEX_ANNOTATION
-detail::send_invocation_result<Executor, typename std::decay<Invocable>::type> invoke_via(const Executor& ex, Invocable&& f)
+detail::chaining_sender<detail::invoke_sender<Executor, typename std::decay<Invocable>::type>>
+  invoke_via(const Executor& ex, Invocable&& f)
 {
-  return {ex, std::forward<Invocable>(f)};
+  detail::invoke_sender<Executor, typename std::decay<Invocable>::type> result{ex, std::forward<Invocable>(f)};
+  return {std::move(result)};
 }
 
 

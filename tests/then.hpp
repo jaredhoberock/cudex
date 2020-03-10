@@ -100,6 +100,71 @@ void test_move_only_continuation()
 }
 
 
+struct my_sender_with_then_member_function
+{
+  int arg;
+
+  template<class Function>
+  __host__ __device__
+  auto then(Function continuation) &&
+    -> decltype(cudex::just(arg).then(continuation))
+  {
+    return cudex::just(arg).then(continuation);
+  }
+};
+
+
+__host__ __device__
+void test_sender_with_then_member_function()
+{
+  result = 0;
+  int arg1 = 13;
+  int arg2 = 7;
+  int expected = arg1 + arg2;
+
+  my_receiver r;
+
+  my_sender_with_then_member_function s{arg1};
+
+  cudex::then(std::move(s), [=](int arg1) {return arg1 + arg2;}).connect(std::move(r)).start();
+
+  assert(expected == result);
+}
+
+
+struct my_sender_with_then_free_function
+{
+  int arg;
+};
+
+
+template<class Function>
+__host__ __device__
+auto then(my_sender_with_then_free_function&& s, Function continuation)
+  -> decltype(cudex::just(s.arg).then(continuation))
+{
+  return cudex::just(s.arg).then(continuation);
+}
+
+
+__host__ __device__
+void test_sender_with_then_free_function()
+{
+  result = 0;
+  int arg1 = 13;
+  int arg2 = 7;
+  int expected = arg1 + arg2;
+
+  my_receiver r;
+
+  my_sender_with_then_member_function s{arg1};
+
+  cudex::then(std::move(s), [=](int arg1) {return arg1 + arg2;}).connect(std::move(r)).start();
+
+  assert(expected == result);
+}
+
+
 template<class F>
 __global__ void device_invoke_kernel(F f)
 {
@@ -144,12 +209,16 @@ void test_then()
 {
   test_copyable_continuation();
   test_move_only_continuation();
+  test_sender_with_then_member_function();
+  test_sender_with_then_free_function();
 
 #ifdef __CUDACC__
   device_invoke([] __device__ ()
   {
     test_copyable_continuation();
     test_move_only_continuation();
+    test_sender_with_then_member_function();
+    test_sender_with_then_free_function();
   });
   assert(cudaDeviceSynchronize() == cudaSuccess);
 #endif

@@ -26,12 +26,12 @@
 
 #pragma once
 
-#include "detail/prologue.hpp"
+#include "prologue.hpp"
 
+#include <type_traits>
 #include <utility>
-#include "detail/chaining_sender.hpp"
-#include "detail/dispatch_then.hpp"
-#include "detail/static_const.hpp"
+#include "dispatch_then.hpp"
+#include "execution.hpp"
 
 
 CUDEX_NAMESPACE_OPEN_BRACE
@@ -41,41 +41,61 @@ namespace detail
 {
 
 
-// this is the type of then
-struct then_customization_point
+// this template wraps another sender and introduces member functions for convenient chaining
+template<class Sender>
+class chaining_sender
 {
-  CUDEX_EXEC_CHECK_DISABLE
-  template<class S, class F,
-           CUDEX_REQUIRES(can_dispatch_then<S&&,F&&>::value)
-          >
-  CUDEX_ANNOTATION
-  constexpr chaining_sender<dispatch_then_t<S&&,F&&>> operator()(S&& s, F&& f) const
-  {
-    return {detail::dispatch_then(std::forward<S>(s), std::forward<F>(f))};
-  }
+  private:
+    Sender sender_;
+
+  public:
+    template<class OtherSender,
+             CUDEX_REQUIRES(std::is_constructible<Sender,OtherSender&&>::value)
+            >
+    CUDEX_ANNOTATION
+    chaining_sender(OtherSender&& sender)
+      : sender_(std::forward<OtherSender>(sender))
+    {}
+
+    chaining_sender(const chaining_sender&) = default;
+
+    chaining_sender(chaining_sender&&) = default;
+
+
+    template<class Receiver>
+    CUDEX_ANNOTATION
+    auto connect(Receiver&& receiver) &&
+      -> decltype(execution::connect(std::move(sender_), std::forward<Receiver>(receiver)))
+    {
+      return execution::connect(std::move(sender_), std::forward<Receiver>(receiver));
+    }
+
+
+    template<class Receiver,
+             CUDEX_REQUIRES(execution::is_sender_to<Sender&&,Receiver&&>::value)
+            >
+    CUDEX_ANNOTATION
+    void submit(Receiver&& receiver) &&
+    {
+      execution::submit(std::move(sender_), std::forward<Receiver>(receiver));
+    }
+
+
+    template<class Function,
+             CUDEX_REQUIRES(can_dispatch_then<Sender&&,Function&&>::value)
+            >
+    CUDEX_ANNOTATION
+    chaining_sender<dispatch_then_t<Sender&&,Function&&>>
+      then(Function&& continuation) &&
+    {
+      return {detail::dispatch_then(std::move(sender_), std::forward<Function>(continuation))};
+    }
 };
 
 
 } // end detail
 
-
-namespace
-{
-
-
-// define the then customization point object
-#ifndef __CUDA_ARCH__
-constexpr auto const& then = detail::static_const<detail::then_customization_point>::value;
-#else
-const __device__ detail::then_customization_point then;
-#endif
-
-
-} // end anonymous namespace
-
-
 CUDEX_NAMESPACE_CLOSE_BRACE
 
-
-#include "detail/epilogue.hpp"
+#include "epilogue.hpp"
 

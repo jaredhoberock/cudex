@@ -53,25 +53,29 @@ class then_receiver
       : receiver_(std::move(receiver)), f_(std::move(f))
     {}
 
+    // Function returns void case
     template<class... Args, class Result = invoke_result_t<Function, Args...>,
+             CUDEX_REQUIRES(std::is_void<Result>::value),
+             CUDEX_REQUIRES(execution::is_receiver_of<Receiver, Result>::value)
+            >
+    void set_value(Args&&... args) &&
+      noexcept(is_nothrow_invocable<Function, Args...>::value and is_nothrow_receiver_of<Receiver>::value)
+    {
+      detail::invoke(std::move(f_), std::forward<Args>(args)...);
+      execution::set_value(std::move(receiver_));
+    }
+
+    // Function returns non-void case
+    template<class... Args, class Result = invoke_result_t<Function, Args...>,
+             CUDEX_REQUIRES(!std::is_void<Result>::value),
              CUDEX_REQUIRES(execution::is_receiver_of<Receiver, Result>::value)
             >
     CUDEX_ANNOTATION
     void set_value(Args&&... args) &&
-        noexcept(is_nothrow_invocable<Function, Args...>::value and is_nothrow_receiver_of<Receiver, Result>::value)
+      noexcept(is_nothrow_invocable<Function, Args...>::value and is_nothrow_receiver_of<Receiver, Result>::value)
     {
       execution::set_value(std::move(receiver_), detail::invoke(std::move(f_), std::forward<Args>(args)...));
     }
-
-//    template<class... Argss, class Ret = invoke_result_t<F, As...>>
-//        requires receiver_of<R> && std::is_void_v<Ret>
-//    void set_value(Argss&&... args) &&
-//        noexcept(std::is_nothrow_invocable_v<F, As...> &&
-//            is_nothrow_receiver_of_v<R>)
-//    {
-//      std::invoke(std::move(f_), std::forward<Args>(args)...);
-//      execution::set_value(std::move(receiver_));
-//    }
 
     template<class Error,
              CUDEX_REQUIRES(execution::is_receiver<Receiver, Error>::value)
@@ -148,7 +152,4 @@ detail::then_sender<detail::decay_t<Sender>, detail::decay_t<Function>>
 
 
 CUDEX_NAMESPACE_CLOSE_BRACE
-
-
-#include "epilogue.hpp"
 
