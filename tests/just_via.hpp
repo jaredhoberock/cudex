@@ -79,6 +79,30 @@ void test_move_only(Executor ex)
 }
 
 
+struct my_executor_with_just_via_member_function : cudex::inline_executor
+{
+  template<class T>
+  __host__ __device__
+  auto just_via(T&& value) const
+    -> decltype(cudex::just_via(cudex::inline_executor(), std::forward<T>(value)))
+  {
+    return cudex::invoke_via(cudex::inline_executor(), std::forward<T>(value));
+  }
+};
+
+
+struct my_executor_with_just_via_free_function : cudex::inline_executor {};
+
+
+template<class T>
+__host__ __device__
+auto just_via(my_executor_with_just_via_free_function, T&& value)
+  -> decltype(cudex::just_via(cudex::inline_executor{}, std::forward<T>(value)))
+{
+  return cudex::just_via(cudex::inline_executor{}, std::forward<T>(value));
+}
+
+
 template<class F>
 __global__ void device_invoke_kernel(F f)
 {
@@ -139,7 +163,12 @@ struct gpu_executor
 void test_just_via()
 {
   test_copyable(cudex::inline_executor{});
+  test_copyable(my_executor_with_just_via_member_function{});
+  test_copyable(my_executor_with_just_via_free_function{});
+
   test_move_only(cudex::inline_executor{});
+  test_move_only(my_executor_with_just_via_member_function{});
+  test_move_only(my_executor_with_just_via_free_function{});
 
 #ifdef __CUDACC__
   test_copyable(gpu_executor{});
@@ -147,7 +176,12 @@ void test_just_via()
   device_invoke([] __device__ ()
   {
     test_copyable(cudex::inline_executor{});
+    test_copyable(my_executor_with_just_via_member_function{});
+    test_copyable(my_executor_with_just_via_free_function{});
+
     test_move_only(cudex::inline_executor{});
+    test_move_only(my_executor_with_just_via_member_function{});
+    test_move_only(my_executor_with_just_via_free_function{});
 
     test_copyable(gpu_executor{});
   });

@@ -26,12 +26,12 @@
 
 #pragma once
 
-#include "detail/prologue.hpp"
+#include "../../prologue.hpp"
 
 #include <utility>
-#include "chaining_sender.hpp"
-#include "detail/combinators/just_via/dispatch_just_via.hpp"
-#include "detail/static_const.hpp"
+#include "../../../invoke_via.hpp"
+#include "../../type_traits/decay.hpp"
+#include "../../execution.hpp"
 
 
 CUDEX_NAMESPACE_OPEN_BRACE
@@ -41,42 +41,43 @@ namespace detail
 {
 
 
-// this is the type of just_via
-struct just_via_customization_point
+template<class T>
+struct return_value
 {
-  CUDEX_EXEC_CHECK_DISABLE
-  template<class E, class T,
-           CUDEX_REQUIRES(can_dispatch_just_via<const E&,T&&>::value)
-          >
+  T value;
+
   CUDEX_ANNOTATION
-  constexpr chaining_sender<dispatch_just_via_t<const E&,T&&>>
-    operator()(const E& ex, T&& value) const
+  T operator()()
   {
-    return {detail::dispatch_just_via(ex, std::forward<T>(value))};
+    return std::move(value);
   }
 };
 
 
-} // end detail
-
-
-namespace
+template<class T>
+CUDEX_ANNOTATION
+return_value<decay_t<T>> make_return_value(T&& value)
 {
+  return {std::forward<T>(value)};
+}
 
 
-// define the just_via customization point object
-#ifndef __CUDA_ARCH__
-constexpr auto const& just_via = detail::static_const<detail::just_via_customization_point>::value;
-#else
-const __device__ detail::just_via_customization_point just_via;
-#endif
+template<class Executor, class T,
+         CUDEX_REQUIRES(detail::execution::is_executor<Executor>::value)
+        >
+CUDEX_ANNOTATION
+auto default_just_via(const Executor& ex, T&& value)
+  -> decltype(CUDEX_NAMESPACE::invoke_via(ex, detail::make_return_value(std::forward<T>(value))))
+{
+  return CUDEX_NAMESPACE::invoke_via(ex, detail::make_return_value(std::forward<T>(value)));
+}
 
 
-} // end anonymous namespace
+} // end namespace detail
 
 
 CUDEX_NAMESPACE_CLOSE_BRACE
 
 
-#include "detail/epilogue.hpp"
+#include "../../epilogue.hpp"
 
