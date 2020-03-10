@@ -30,7 +30,7 @@
 
 #include <type_traits>
 #include <utility>
-#include "detail/combinators/dispatch/dispatch_then.hpp"
+#include "detail/combinators/then/dispatch_then.hpp"
 #include "detail/execution.hpp"
 
 

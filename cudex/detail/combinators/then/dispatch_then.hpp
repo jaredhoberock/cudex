@@ -29,7 +29,7 @@
 #include "../../../detail/prologue.hpp"
 
 #include <utility>
-#include "../default/default_then.hpp"
+#include "default_then.hpp"
 
 
 CUDEX_NAMESPACE_OPEN_BRACE

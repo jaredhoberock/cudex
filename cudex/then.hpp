@@ -30,7 +30,7 @@
 
 #include <utility>
 #include "chaining_sender.hpp"
-#include "detail/combinators/dispatch/dispatch_then.hpp"
+#include "detail/combinators/then/dispatch_then.hpp"
 #include "detail/static_const.hpp"
 
 
