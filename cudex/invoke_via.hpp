@@ -28,14 +28,10 @@
 
 #include "detail/prologue.hpp"
 
-#include <type_traits>
 #include <utility>
 #include "chaining_sender.hpp"
-#include "detail/execute_operation.hpp"
-#include "detail/functional/bind.hpp"
-#include "detail/functional/compose.hpp"
-#include "detail/receiver_as_invocable.hpp"
-#include "detail/type_traits/is_invocable.hpp"
+#include "detail/combinators/invoke_via/dispatch_invoke_via.hpp"
+#include "detail/static_const.hpp"
 
 
 CUDEX_NAMESPACE_OPEN_BRACE
@@ -45,75 +41,38 @@ namespace detail
 {
 
 
-// this is a sender that invokes a function via an executor and sends the result to a receiver
-template<class Executor, class Invocable>
-class invoke_sender
+// this is the type of invoke_via
+struct invoke_via_customization_point
 {
-  public:
-    template<class OtherInvocable,
-             CUDEX_REQUIRES(std::is_constructible<Invocable,OtherInvocable&&>::value)
-            >
-    CUDEX_ANNOTATION
-    invoke_sender(const Executor& ex, OtherInvocable&& invocable)
-      : ex_(ex), invocable_(std::forward<OtherInvocable>(invocable))
-    {}
-
-    invoke_sender(const invoke_sender&) = default;
-
-    invoke_sender(invoke_sender&&) = default;
-
-    // the type of operation returned by connect
-    template<class Receiver>
-    using operation = execute_operation<
-      Executor,
-      function_composition<
-        receiver_as_invocable<Receiver>,
-        Invocable
-      >
-    >;
-
-    template<class Receiver,
-             CUDEX_REQUIRES(execution::is_receiver_of<Receiver, invoke_result_t<Invocable>>::value)
-            >
-    CUDEX_ANNOTATION
-    operation<Receiver&&> connect(Receiver&& r) &&
-    {
-      auto composition = detail::compose(detail::as_invocable(std::forward<Receiver>(r)), std::move(invocable_));
-      return detail::make_execute_operation(ex_, std::move(composition));
-    }
-
-  private:
-    Executor ex_;
-    Invocable invocable_;
+  CUDEX_EXEC_CHECK_DISABLE
+  template<class E, class F, class... Args,
+           CUDEX_REQUIRES(can_dispatch_invoke_via<const E&,F&&,Args&&...>::value)
+          >
+  CUDEX_ANNOTATION
+  constexpr chaining_sender<dispatch_invoke_via_t<const E&,F&&,Args&&...>>
+    operator()(const E& ex, F&& f, Args&&... args) const
+  {
+    return {detail::dispatch_invoke_via(ex, std::forward<F>(f), std::forward<Args>(args)...)};
+  }
 };
 
 
 } // end detail
 
 
-template<class Executor, class Invocable,
-         CUDEX_REQUIRES(detail::execution::is_executor_of<Executor,Invocable>::value)
-        >
-CUDEX_ANNOTATION
-chaining_sender<detail::invoke_sender<Executor, typename std::decay<Invocable>::type>>
-  invoke_via(const Executor& ex, Invocable&& f)
+namespace
 {
-  detail::invoke_sender<Executor, typename std::decay<Invocable>::type> result{ex, std::forward<Invocable>(f)};
-  return {std::move(result)};
-}
 
 
-template<class Executor, class Invocable,
-         class Arg1, class... Args,
-         CUDEX_REQUIRES(detail::execution::is_executor<Executor>::value),
-         CUDEX_REQUIRES(detail::is_invocable<Invocable,Arg1,Args...>::value)
-        >
-CUDEX_ANNOTATION
-auto invoke_via(const Executor& ex, Invocable&& f, Arg1&& arg1, Args&&... args)
-  -> decltype(CUDEX_NAMESPACE::invoke_via(ex, detail::bind(std::forward<Invocable>(f), std::forward<Arg1>(arg1), std::forward<Args>(args)...)))
-{
-  return CUDEX_NAMESPACE::invoke_via(ex, detail::bind(std::forward<Invocable>(f), std::forward<Arg1>(arg1), std::forward<Args>(args)...));
-}
+// define the invoke_via customization point object
+#ifndef __CUDA_ARCH__
+constexpr auto const& invoke_via = detail::static_const<detail::invoke_via_customization_point>::value;
+#else
+const __device__ detail::invoke_via_customization_point invoke_via;
+#endif
+
+
+} // end anonymous namespace
 
 
 CUDEX_NAMESPACE_CLOSE_BRACE

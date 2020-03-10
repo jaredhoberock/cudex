@@ -118,6 +118,29 @@ void test_move_only_invocable(Executor ex)
 }
 
 
+struct my_executor_with_invoke_via_member_function : cudex::inline_executor
+{
+  template<class Function>
+  __host__ __device__
+  auto invoke_via(Function f) const
+    -> decltype(cudex::invoke_via(cudex::inline_executor(), f))
+  {
+    return cudex::invoke_via(cudex::inline_executor(), f);
+  }
+};
+
+
+struct my_executor_with_invoke_via_free_function : cudex::inline_executor {};
+
+
+template<class Function>
+__host__ __device__
+auto invoke_via(my_executor_with_invoke_via_free_function, Function f)
+  -> decltype(cudex::invoke_via(cudex::inline_executor{}, f))
+{
+  return cudex::invoke_via(cudex::inline_executor{}, f);
+}
+
 
 template<class F>
 __global__ void device_invoke_kernel(F f)
@@ -179,6 +202,9 @@ struct gpu_executor
 void test_invoke_via()
 {
   test_variadicity(cudex::inline_executor{});
+  test_variadicity(my_executor_with_invoke_via_member_function{});
+  test_variadicity(my_executor_with_invoke_via_free_function{});
+
   test_move_only_invocable(cudex::inline_executor{});
 
 #ifdef __CUDACC__
@@ -187,9 +213,11 @@ void test_invoke_via()
   device_invoke([] __device__ ()
   {
     test_variadicity(cudex::inline_executor{});
-    test_move_only_invocable(cudex::inline_executor{});
-
     test_variadicity(gpu_executor{});
+    test_variadicity(my_executor_with_invoke_via_member_function{});
+    test_variadicity(my_executor_with_invoke_via_free_function{});
+
+    test_move_only_invocable(cudex::inline_executor{});
   });
   assert(cudaDeviceSynchronize() == cudaSuccess);
 #endif
