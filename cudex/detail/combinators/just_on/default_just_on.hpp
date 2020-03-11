@@ -29,7 +29,7 @@
 #include "../../prologue.hpp"
 
 #include <utility>
-#include "../../../invoke_via.hpp"
+#include "../../../invoke_on.hpp"
 #include "../../type_traits/decay.hpp"
 #include "../../execution.hpp"
 
@@ -67,9 +67,9 @@ template<class Executor, class T,
         >
 CUDEX_ANNOTATION
 auto default_just_on(const Executor& ex, T&& value)
-  -> decltype(CUDEX_NAMESPACE::invoke_via(ex, detail::make_return_value(std::forward<T>(value))))
+  -> decltype(CUDEX_NAMESPACE::invoke_on(ex, detail::make_return_value(std::forward<T>(value))))
 {
-  return CUDEX_NAMESPACE::invoke_via(ex, detail::make_return_value(std::forward<T>(value)));
+  return CUDEX_NAMESPACE::invoke_on(ex, detail::make_return_value(std::forward<T>(value)));
 }
 
 

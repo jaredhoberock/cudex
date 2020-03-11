@@ -1,7 +1,7 @@
 #include <cassert>
 #include <cstring>
 #include <cudex/inline_executor.hpp>
-#include <cudex/invoke_via.hpp>
+#include <cudex/invoke_on.hpp>
 #include <exception>
 #include <utility>
 
@@ -60,7 +60,7 @@ void test_variadicity(Executor ex)
     my_receiver r;
 
     auto return_expected = [=] __host__ __device__ { return expected; };
-    invoke_via(ex, return_expected).connect(std::move(r)).start();
+    invoke_on(ex, return_expected).connect(std::move(r)).start();
 
     assert(expected == result);
   }
@@ -75,7 +75,7 @@ void test_variadicity(Executor ex)
     my_receiver r;
 
     auto identity = [] __host__ __device__ (int x){ return x; };
-    invoke_via(ex, identity, arg).connect(std::move(r)).start();
+    invoke_on(ex, identity, arg).connect(std::move(r)).start();
 
     assert(expected == result);
   }
@@ -91,7 +91,7 @@ void test_variadicity(Executor ex)
     my_receiver r;
 
     auto plus = [] __host__ __device__ (int x, int y){ return x + y; };
-    invoke_via(ex, plus, arg1, arg2).connect(std::move(r)).start();
+    invoke_on(ex, plus, arg1, arg2).connect(std::move(r)).start();
 
     assert(expected == result);
   }
@@ -112,33 +112,33 @@ void test_move_only_invocable(Executor ex)
   my_receiver r;
 
   move_only_invocable return_expected{13};
-  invoke_via(ex, std::move(return_expected)).connect(std::move(r)).start();
+  invoke_on(ex, std::move(return_expected)).connect(std::move(r)).start();
 
   assert(expected == result);
 }
 
 
-struct my_executor_with_invoke_via_member_function : cudex::inline_executor
+struct my_executor_with_invoke_on_member_function : cudex::inline_executor
 {
   template<class Function>
   __host__ __device__
-  auto invoke_via(Function f) const
-    -> decltype(cudex::invoke_via(cudex::inline_executor(), f))
+  auto invoke_on(Function f) const
+    -> decltype(cudex::invoke_on(cudex::inline_executor(), f))
   {
-    return cudex::invoke_via(cudex::inline_executor(), f);
+    return cudex::invoke_on(cudex::inline_executor(), f);
   }
 };
 
 
-struct my_executor_with_invoke_via_free_function : cudex::inline_executor {};
+struct my_executor_with_invoke_on_free_function : cudex::inline_executor {};
 
 
 template<class Function>
 __host__ __device__
-auto invoke_via(my_executor_with_invoke_via_free_function, Function f)
-  -> decltype(cudex::invoke_via(cudex::inline_executor{}, f))
+auto invoke_on(my_executor_with_invoke_on_free_function, Function f)
+  -> decltype(cudex::invoke_on(cudex::inline_executor{}, f))
 {
-  return cudex::invoke_via(cudex::inline_executor{}, f);
+  return cudex::invoke_on(cudex::inline_executor{}, f);
 }
 
 
@@ -199,11 +199,11 @@ struct gpu_executor
 };
 
 
-void test_invoke_via()
+void test_invoke_on()
 {
   test_variadicity(cudex::inline_executor{});
-  test_variadicity(my_executor_with_invoke_via_member_function{});
-  test_variadicity(my_executor_with_invoke_via_free_function{});
+  test_variadicity(my_executor_with_invoke_on_member_function{});
+  test_variadicity(my_executor_with_invoke_on_free_function{});
 
   test_move_only_invocable(cudex::inline_executor{});
 
@@ -214,8 +214,8 @@ void test_invoke_via()
   {
     test_variadicity(cudex::inline_executor{});
     test_variadicity(gpu_executor{});
-    test_variadicity(my_executor_with_invoke_via_member_function{});
-    test_variadicity(my_executor_with_invoke_via_free_function{});
+    test_variadicity(my_executor_with_invoke_on_member_function{});
+    test_variadicity(my_executor_with_invoke_on_free_function{});
 
     test_move_only_invocable(cudex::inline_executor{});
   });

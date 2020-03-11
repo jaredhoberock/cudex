@@ -44,7 +44,7 @@ namespace detail
 {
 
 
-// this is a sender that invokes a function via an executor and sends the result to a receiver
+// this is a sender that invokes a function on an executor and sends the result to a receiver
 template<class Executor, class Invocable>
 class invoke_sender
 {
@@ -92,7 +92,7 @@ template<class Executor, class Invocable,
         >
 CUDEX_ANNOTATION
 invoke_sender<Executor, decay_t<Invocable>>
-  default_invoke_via(const Executor& ex, Invocable&& f)
+  default_invoke_on(const Executor& ex, Invocable&& f)
 {
   return {ex, std::forward<Invocable>(f)};
 }
@@ -105,9 +105,9 @@ template<class Executor, class Invocable,
         >
 CUDEX_ANNOTATION
 invoke_sender<Executor, bind_result<decay_t<Invocable>, decay_t<Arg1>, decay_t<Args>...>>
-  default_invoke_via(const Executor& ex, Invocable&& f, Arg1&& arg1, Args&&... args)
+  default_invoke_on(const Executor& ex, Invocable&& f, Arg1&& arg1, Args&&... args)
 {
-  return detail::default_invoke_via(ex, detail::bind(std::forward<Invocable>(f), std::forward<Arg1>(arg1), std::forward<Args>(args)...));
+  return detail::default_invoke_on(ex, detail::bind(std::forward<Invocable>(f), std::forward<Arg1>(arg1), std::forward<Args>(args)...));
 }
 
 

@@ -86,7 +86,7 @@ struct my_executor_with_just_on_member_function : cudex::inline_executor
   auto just_on(T&& value) const
     -> decltype(cudex::just_on(cudex::inline_executor(), std::forward<T>(value)))
   {
-    return cudex::invoke_via(cudex::inline_executor(), std::forward<T>(value));
+    return cudex::invoke_on(cudex::inline_executor(), std::forward<T>(value));
   }
 };
 

@@ -30,7 +30,7 @@
 
 #include <utility>
 #include "chaining_sender.hpp"
-#include "detail/combinators/invoke_via/dispatch_invoke_via.hpp"
+#include "detail/combinators/invoke_on/dispatch_invoke_on.hpp"
 #include "detail/static_const.hpp"
 
 
@@ -41,18 +41,18 @@ namespace detail
 {
 
 
-// this is the type of invoke_via
-struct invoke_via_customization_point
+// this is the type of invoke_on
+struct invoke_on_customization_point
 {
   CUDEX_EXEC_CHECK_DISABLE
   template<class E, class F, class... Args,
-           CUDEX_REQUIRES(can_dispatch_invoke_via<const E&,F&&,Args&&...>::value)
+           CUDEX_REQUIRES(can_dispatch_invoke_on<const E&,F&&,Args&&...>::value)
           >
   CUDEX_ANNOTATION
-  constexpr chaining_sender<dispatch_invoke_via_t<const E&,F&&,Args&&...>>
+  constexpr chaining_sender<dispatch_invoke_on_t<const E&,F&&,Args&&...>>
     operator()(const E& ex, F&& f, Args&&... args) const
   {
-    return {detail::dispatch_invoke_via(ex, std::forward<F>(f), std::forward<Args>(args)...)};
+    return {detail::dispatch_invoke_on(ex, std::forward<F>(f), std::forward<Args>(args)...)};
   }
 };
 
@@ -64,11 +64,11 @@ namespace
 {
 
 
-// define the invoke_via customization point object
+// define the invoke_on customization point object
 #ifndef __CUDA_ARCH__
-constexpr auto const& invoke_via = detail::static_const<detail::invoke_via_customization_point>::value;
+constexpr auto const& invoke_on = detail::static_const<detail::invoke_on_customization_point>::value;
 #else
-const __device__ detail::invoke_via_customization_point invoke_via;
+const __device__ detail::invoke_on_customization_point invoke_on;
 #endif
 
 
