@@ -66,7 +66,7 @@ template<class Executor, class T,
          CUDEX_REQUIRES(detail::execution::is_executor<Executor>::value)
         >
 CUDEX_ANNOTATION
-auto default_just_via(const Executor& ex, T&& value)
+auto default_just_on(const Executor& ex, T&& value)
   -> decltype(CUDEX_NAMESPACE::invoke_via(ex, detail::make_return_value(std::forward<T>(value))))
 {
   return CUDEX_NAMESPACE::invoke_via(ex, detail::make_return_value(std::forward<T>(value)));

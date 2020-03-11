@@ -30,7 +30,7 @@
 
 #include <utility>
 #include "../../type_traits/is_detected.hpp"
-#include "default_just_via.hpp"
+#include "default_just_on.hpp"
 
 
 CUDEX_NAMESPACE_OPEN_BRACE
@@ -41,64 +41,64 @@ namespace detail
 
 
 template<class E, class T>
-using just_via_member_function_t = decltype(std::declval<E>().just_via(std::declval<E>(), std::declval<T>()));
+using just_on_member_function_t = decltype(std::declval<E>().just_on(std::declval<E>(), std::declval<T>()));
 
 template<class E, class T>
-using has_just_via_member_function = is_detected<just_via_member_function_t, E, T>;
+using has_just_on_member_function = is_detected<just_on_member_function_t, E, T>;
 
 
 template<class E, class T>
-using just_via_free_function_t = decltype(just_via(std::declval<E>(), std::declval<T>()));
+using just_on_free_function_t = decltype(just_on(std::declval<E>(), std::declval<T>()));
 
 template<class E, class T>
-using has_just_via_free_function = is_detected<just_via_free_function_t, E, T>;
+using has_just_on_free_function = is_detected<just_on_free_function_t, E, T>;
 
 
-// dispatch case 1: ex.just_via(value) exists
+// dispatch case 1: ex.just_on(value) exists
 template<class Executor, class T,
-         CUDEX_REQUIRES(has_just_via_member_function<const Executor&,T&&>::value)
+         CUDEX_REQUIRES(has_just_on_member_function<const Executor&,T&&>::value)
         >
 CUDEX_ANNOTATION
-auto dispatch_just_via(const Executor& ex, T&& value)
-  -> decltype(ex.just_via(std::forward<T>(value)))
+auto dispatch_just_on(const Executor& ex, T&& value)
+  -> decltype(ex.just_on(std::forward<T>(value)))
 {
-  return ex.just_via(std::forward<T>(value));
+  return ex.just_on(std::forward<T>(value));
 }
 
 
-// dispatch case 1: ex.just_via(f) does not exist
-//                  just_via(ex, f) does exist
+// dispatch case 1: ex.just_on(f) does not exist
+//                  just_on(ex, f) does exist
 template<class Executor, class T,
-         CUDEX_REQUIRES(!has_just_via_member_function<const Executor&,T&&>::value),
-         CUDEX_REQUIRES(has_just_via_free_function<const Executor&,T&&>::value)
+         CUDEX_REQUIRES(!has_just_on_member_function<const Executor&,T&&>::value),
+         CUDEX_REQUIRES(has_just_on_free_function<const Executor&,T&&>::value)
         >
 CUDEX_ANNOTATION
-auto dispatch_just_via(const Executor& ex, T&& value)
-  -> decltype(just_via(ex, std::forward<T>(value)))
+auto dispatch_just_on(const Executor& ex, T&& value)
+  -> decltype(just_on(ex, std::forward<T>(value)))
 {
-  return just_via(ex, std::forward<T>(value));
+  return just_on(ex, std::forward<T>(value));
 }
 
 
-// dispatch case 2: ex.just_via(f) does not exist
-//                  just_via(ex, f) does not exist
+// dispatch case 2: ex.just_on(f) does not exist
+//                  just_on(ex, f) does not exist
 template<class Executor, class T,
-         CUDEX_REQUIRES(!has_just_via_member_function<const Executor&,T&&>::value),
-         CUDEX_REQUIRES(!has_just_via_free_function<const Executor&,T&&>::value)
+         CUDEX_REQUIRES(!has_just_on_member_function<const Executor&,T&&>::value),
+         CUDEX_REQUIRES(!has_just_on_free_function<const Executor&,T&&>::value)
         >
 CUDEX_ANNOTATION
-constexpr auto dispatch_just_via(const Executor& ex, T&& value)
-  -> decltype(detail::default_just_via(ex, std::forward<T>(value)))
+constexpr auto dispatch_just_on(const Executor& ex, T&& value)
+  -> decltype(detail::default_just_on(ex, std::forward<T>(value)))
 {
-  return detail::default_just_via(ex, std::forward<T>(value));
+  return detail::default_just_on(ex, std::forward<T>(value));
 }
 
 
 template<class E, class T>
-using dispatch_just_via_t = decltype(detail::dispatch_just_via(std::declval<E>(), std::declval<T>()));
+using dispatch_just_on_t = decltype(detail::dispatch_just_on(std::declval<E>(), std::declval<T>()));
 
 template<class E, class T>
-using can_dispatch_just_via = is_detected<dispatch_just_via_t, E, T>;
+using can_dispatch_just_on = is_detected<dispatch_just_on_t, E, T>;
 
 
 } // end detail

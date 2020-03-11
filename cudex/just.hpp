@@ -29,7 +29,7 @@
 #include "detail/prologue.hpp"
 
 #include "inline_executor.hpp"
-#include "just_via.hpp"
+#include "just_on.hpp"
 
 
 CUDEX_NAMESPACE_OPEN_BRACE
@@ -38,9 +38,9 @@ CUDEX_NAMESPACE_OPEN_BRACE
 template<class T>
 CUDEX_ANNOTATION
 auto just(T&& value)
-  -> decltype(CUDEX_NAMESPACE::just_via(inline_executor{}, std::forward<T>(value)))
+  -> decltype(CUDEX_NAMESPACE::just_on(inline_executor{}, std::forward<T>(value)))
 {
-  return CUDEX_NAMESPACE::just_via(inline_executor{}, std::forward<T>(value));
+  return CUDEX_NAMESPACE::just_on(inline_executor{}, std::forward<T>(value));
 }
 
 

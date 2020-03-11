@@ -1,7 +1,7 @@
 #include <cassert>
 #include <cstring>
 #include <cudex/inline_executor.hpp>
-#include <cudex/just_via.hpp>
+#include <cudex/just_on.hpp>
 #include <exception>
 #include <utility>
 
@@ -56,7 +56,7 @@ void test_copyable(Executor ex)
 
   my_receiver r;
 
-  just_via(ex, expected).connect(std::move(r)).start();
+  just_on(ex, expected).connect(std::move(r)).start();
 
   assert(expected == result);
 }
@@ -73,33 +73,33 @@ void test_move_only(Executor ex)
 
   my_receiver r;
 
-  just_via(ex, move_only{expected}).connect(std::move(r)).start();
+  just_on(ex, move_only{expected}).connect(std::move(r)).start();
 
   assert(expected == result);
 }
 
 
-struct my_executor_with_just_via_member_function : cudex::inline_executor
+struct my_executor_with_just_on_member_function : cudex::inline_executor
 {
   template<class T>
   __host__ __device__
-  auto just_via(T&& value) const
-    -> decltype(cudex::just_via(cudex::inline_executor(), std::forward<T>(value)))
+  auto just_on(T&& value) const
+    -> decltype(cudex::just_on(cudex::inline_executor(), std::forward<T>(value)))
   {
     return cudex::invoke_via(cudex::inline_executor(), std::forward<T>(value));
   }
 };
 
 
-struct my_executor_with_just_via_free_function : cudex::inline_executor {};
+struct my_executor_with_just_on_free_function : cudex::inline_executor {};
 
 
 template<class T>
 __host__ __device__
-auto just_via(my_executor_with_just_via_free_function, T&& value)
-  -> decltype(cudex::just_via(cudex::inline_executor{}, std::forward<T>(value)))
+auto just_on(my_executor_with_just_on_free_function, T&& value)
+  -> decltype(cudex::just_on(cudex::inline_executor{}, std::forward<T>(value)))
 {
-  return cudex::just_via(cudex::inline_executor{}, std::forward<T>(value));
+  return cudex::just_on(cudex::inline_executor{}, std::forward<T>(value));
 }
 
 
@@ -160,15 +160,15 @@ struct gpu_executor
 };
 
 
-void test_just_via()
+void test_just_on()
 {
   test_copyable(cudex::inline_executor{});
-  test_copyable(my_executor_with_just_via_member_function{});
-  test_copyable(my_executor_with_just_via_free_function{});
+  test_copyable(my_executor_with_just_on_member_function{});
+  test_copyable(my_executor_with_just_on_free_function{});
 
   test_move_only(cudex::inline_executor{});
-  test_move_only(my_executor_with_just_via_member_function{});
-  test_move_only(my_executor_with_just_via_free_function{});
+  test_move_only(my_executor_with_just_on_member_function{});
+  test_move_only(my_executor_with_just_on_free_function{});
 
 #ifdef __CUDACC__
   test_copyable(gpu_executor{});
@@ -176,12 +176,12 @@ void test_just_via()
   device_invoke([] __device__ ()
   {
     test_copyable(cudex::inline_executor{});
-    test_copyable(my_executor_with_just_via_member_function{});
-    test_copyable(my_executor_with_just_via_free_function{});
+    test_copyable(my_executor_with_just_on_member_function{});
+    test_copyable(my_executor_with_just_on_free_function{});
 
     test_move_only(cudex::inline_executor{});
-    test_move_only(my_executor_with_just_via_member_function{});
-    test_move_only(my_executor_with_just_via_free_function{});
+    test_move_only(my_executor_with_just_on_member_function{});
+    test_move_only(my_executor_with_just_on_free_function{});
 
     test_copyable(gpu_executor{});
   });

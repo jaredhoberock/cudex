@@ -30,7 +30,7 @@
 
 #include <utility>
 #include "chaining_sender.hpp"
-#include "detail/combinators/just_via/dispatch_just_via.hpp"
+#include "detail/combinators/just_on/dispatch_just_on.hpp"
 #include "detail/static_const.hpp"
 
 
@@ -41,18 +41,18 @@ namespace detail
 {
 
 
-// this is the type of just_via
-struct just_via_customization_point
+// this is the type of just_on
+struct just_on_customization_point
 {
   CUDEX_EXEC_CHECK_DISABLE
   template<class E, class T,
-           CUDEX_REQUIRES(can_dispatch_just_via<const E&,T&&>::value)
+           CUDEX_REQUIRES(can_dispatch_just_on<const E&,T&&>::value)
           >
   CUDEX_ANNOTATION
-  constexpr chaining_sender<dispatch_just_via_t<const E&,T&&>>
+  constexpr chaining_sender<dispatch_just_on_t<const E&,T&&>>
     operator()(const E& ex, T&& value) const
   {
-    return {detail::dispatch_just_via(ex, std::forward<T>(value))};
+    return {detail::dispatch_just_on(ex, std::forward<T>(value))};
   }
 };
 
@@ -64,11 +64,11 @@ namespace
 {
 
 
-// define the just_via customization point object
+// define the just_on customization point object
 #ifndef __CUDA_ARCH__
-constexpr auto const& just_via = detail::static_const<detail::just_via_customization_point>::value;
+constexpr auto const& just_on = detail::static_const<detail::just_on_customization_point>::value;
 #else
-const __device__ detail::just_via_customization_point just_via;
+const __device__ detail::just_on_customization_point just_on;
 #endif
 
 
