@@ -42,21 +42,24 @@ To make it concrete, consider `invoke_sender`, used by `default_invoke_on`:
         template<class OtherInvocable>
         invoke_sender(const Executor& ex, OtherInvocable&& invocable);
 
+
         // allow copies of invoke_sender when possible
         invoke_sender(const invoke_sender&) = default;
 
         // move-construction must always be possible for senders
         invoke_sender(invoke_sender&&) = default;
 
+
         // consuming connect() must always be possible for senders
         template<class Receiver>
         auto connect(Receiver&& r) &&;
 
-        // enable non-consuming connect() when when Invocable is copyable
+        // enable non-consuming connect() when Invocable is copyable
         template<class Receiver,
                  CUDEX_REQUIRES(std::is_copy_constructible<Invocable>::value)
                 >
         auto connect(Receiver&& r) const &;
+
 
         // to be a good citizen, customize consuming on()
         template<class OtherExecutor>
