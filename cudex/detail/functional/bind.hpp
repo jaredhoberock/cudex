@@ -71,25 +71,28 @@ class bind_result
     bind_result(const bind_result&) = default;
 
     
-    template<CUDEX_REQUIRES(is_applicable<Invocable&,tuple_type&>::value)>
+    // indirect use of Invocable via a defaulted parameter enables SFINAE in CUDEX_REQUIRES
+    template<class I = Invocable, CUDEX_REQUIRES(is_applicable<I&,tuple_type&>::value)>
     CUDEX_ANNOTATION
-    apply_result_t<Invocable&,tuple_type&> operator()() &
+    apply_result_t<I&,tuple_type&> operator()() &
     {
       return detail::apply(f_, args_);
     }
 
 
-    template<CUDEX_REQUIRES(is_applicable<const Invocable&,const tuple_type&>::value)>
+    // indirect use of Invocable via a defaulted parameter enables SFINAE in CUDEX_REQUIRES
+    template<class I = Invocable, CUDEX_REQUIRES(is_applicable<const I&,const tuple_type&>::value)>
     CUDEX_ANNOTATION
-    apply_result_t<const Invocable&,const tuple_type&> operator()() const &
+    apply_result_t<const I&,const tuple_type&> operator()() const &
     {
       return detail::apply(f_, args_);
     }
 
 
-    template<CUDEX_REQUIRES(is_applicable<Invocable&&,tuple_type&&>::value)>
+    // indirect use of Invocable via a defaulted parameter enables SFINAE in CUDEX_REQUIRES
+    template<class I = Invocable, CUDEX_REQUIRES(is_applicable<I&&,tuple_type&&>::value)>
     CUDEX_ANNOTATION
-    apply_result_t<Invocable&&,tuple_type&&> operator()() &&
+    apply_result_t<I&&,tuple_type&&> operator()() &&
     {
       return detail::apply(std::move(f_), std::move(args_));
     }
