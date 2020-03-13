@@ -87,6 +87,17 @@ class chaining_sender
     {
       return {detail::dispatch_then(std::move(sender_), std::forward<Function>(continuation))};
     }
+
+
+    template<class Executor,
+             CUDEX_REQUIRES(detail::can_dispatch_on<Sender&&,const Executor&>::value)
+            >
+    CUDEX_ANNOTATION
+    chaining_sender<detail::dispatch_on_t<Sender&&,const Executor&>>
+      on(const Executor& ex) &&
+    {
+      return {detail::dispatch_on(std::move(sender_), ex)};
+    }
 };
 
 

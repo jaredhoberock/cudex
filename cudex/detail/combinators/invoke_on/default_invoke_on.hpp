@@ -81,6 +81,18 @@ class invoke_sender
       return detail::make_execute_operation(ex_, std::move(composition));
     }
 
+    // this overload allows makes invoke_sender a "multi-shot" sender when Invocable is copyable
+    template<class Receiver,
+             CUDEX_REQUIRES(std::is_copy_constructible<Invocable>::value),
+             CUDEX_REQUIRES(execution::is_receiver_of<Receiver, invoke_result_t<Invocable>>::value)
+            >
+    CUDEX_ANNOTATION
+    operation<Receiver&&> connect(Receiver&& r) const &
+    {
+      auto composition = detail::compose(detail::as_invocable(std::forward<Receiver>(r)), invocable_);
+      return detail::make_execute_operation(ex_, std::move(composition));
+    }
+
   private:
     Executor ex_;
     Invocable invocable_;
