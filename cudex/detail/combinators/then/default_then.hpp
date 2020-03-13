@@ -136,6 +136,18 @@ class then_sender
     {
       return execution::connect(std::move(predecessor_), detail::make_then_receiver(std::move(r), std::move(continuation_)));
     }
+
+    // this overload allows makes then_sender a "multi-shot" sender when both the predecessor and continuation are copyable
+    // XXX should introduce is_multishot_sender or something
+    template<class Receiver,
+             CUDEX_REQUIRES(execution::is_sender_to<Sender, then_receiver<Receiver, Function>>::value)
+            >
+    CUDEX_ANNOTATION
+    auto connect(Receiver&& r) const &
+      -> decltype(execution::connect(predecessor_, detail::make_then_receiver(std::move(r), continuation_)))
+    {
+      return execution::connect(std::move(predecessor_), detail::make_then_receiver(std::move(r), continuation_));
+    }
 };
 
 
