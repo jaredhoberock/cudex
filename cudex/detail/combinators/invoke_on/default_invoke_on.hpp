@@ -71,6 +71,7 @@ class invoke_sender
       >
     >;
 
+
     template<class Receiver,
              CUDEX_REQUIRES(execution::is_receiver_of<Receiver, invoke_result_t<Invocable>>::value)
             >
@@ -80,6 +81,7 @@ class invoke_sender
       auto composition = detail::compose(detail::as_invocable(std::forward<Receiver>(r)), std::move(invocable_));
       return detail::make_execute_operation(ex_, std::move(composition));
     }
+
 
     // this overload allows makes invoke_sender a "multi-shot" sender when Invocable is copyable
     template<class Receiver,
@@ -91,6 +93,27 @@ class invoke_sender
     {
       auto composition = detail::compose(detail::as_invocable(std::forward<Receiver>(r)), invocable_);
       return detail::make_execute_operation(ex_, std::move(composition));
+    }
+
+    
+    template<class OtherExecutor,
+             CUDEX_REQUIRES(execution::is_executor<OtherExecutor>::value)
+            >
+    CUDEX_ANNOTATION
+    invoke_sender<OtherExecutor, Invocable> on(const OtherExecutor& ex) &&
+    {
+      return {ex, std::move(invocable_)};
+    }
+
+
+    template<class OtherExecutor,
+             CUDEX_REQUIRES(execution::is_executor<OtherExecutor>::value),
+             CUDEX_REQUIRES(std::is_copy_constructible<Invocable>::value)
+            >
+    CUDEX_ANNOTATION
+    invoke_sender<OtherExecutor, Invocable> on(const OtherExecutor& ex) const &
+    {
+      return {ex, invocable_};
     }
 
   private:
