@@ -66,27 +66,6 @@ class on_sender
     class operation
     {
       public:
-      //private:
-        // this is a nullary function which submits its sender to its receiver
-        // its purpose is to be executed by operation::executor_ inside of operation::start
-        // XXX we should be able to completely eliminate this
-        struct connect_and_start_function
-        {
-          CUDEX_ANNOTATION
-          void operator()()
-          {
-            execution::submit(std::move(sender_), std::move(receiver_));
-          }
-
-          Sender sender_;
-          Receiver receiver_;
-        };
-
-        Executor executor_;
-        Sender sender_;
-        Receiver receiver_;
-
-      public:
         CUDEX_EXEC_CHECK_DISABLE
         CUDEX_ANNOTATION
         operation(const Executor& executor, Sender&& sender, Receiver&& receiver)
@@ -98,17 +77,14 @@ class on_sender
         CUDEX_ANNOTATION
         void start() &&
         {
-          //// create a function that will submit the receiver
-          //auto submission = detail::bind(execution::submit, std::move(sender_), std::move(receiver_));
-
-          //// execute that function on our executor
-          //execution::execute(executor_, std::move(submission));
+          // create a function that will submit the sender to the receiver and then execute that function on our executor
           execution::execute(executor_, detail::bind(execution::submit, std::move(sender_), std::move(receiver_)));
-
-          // XXX seems like we should be able to bind(execution::submit, sender_, receiver_) and pass that to executor
-          //     if we could do that, then operation could just be detail::execute_operation
-          //execution::execute(executor_, connect_and_start_function{std::move(sender_), std::move(receiver_)});
         }
+
+      private:
+        Executor executor_;
+        Sender sender_;
+        Receiver receiver_;
     };
 
     template<class Receiver,
