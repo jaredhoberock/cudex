@@ -55,6 +55,10 @@ class on_sender
         executor_(executor)
     {}
 
+    on_sender(const on_sender&) = default;
+
+    on_sender(on_sender&&) = default;
+
     CUDEX_ANNOTATION
     const Executor& get_executor() const
     {
@@ -100,9 +104,19 @@ class on_sender
              CUDEX_REQUIRES(execution::is_executor<OtherExecutor>::value)
             >
     CUDEX_ANNOTATION
-    on_sender<Sender, OtherExecutor> on(OtherExecutor&& executor) &&
+    on_sender<Sender, OtherExecutor> on(const OtherExecutor& executor) &&
     {
       return {std::move(sender_), executor};
+    }
+
+    template<class OtherExecutor,
+             CUDEX_REQUIRES(execution::is_executor<OtherExecutor>::value),
+             CUDEX_REQUIRES(std::is_copy_constructible<Sender>::value)
+            >
+    CUDEX_ANNOTATION
+    on_sender<Sender, OtherExecutor> on(const OtherExecutor& executor) const &
+    {
+      return {sender_, executor};
     }
 
   private:
