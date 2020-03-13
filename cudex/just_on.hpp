@@ -49,10 +49,10 @@ struct just_on_customization_point
            CUDEX_REQUIRES(can_dispatch_just_on<const E&,T&&>::value)
           >
   CUDEX_ANNOTATION
-  constexpr chaining_sender<dispatch_just_on_t<const E&,T&&>>
+  constexpr ensure_chaining_sender_t<dispatch_just_on_t<const E&,T&&>>
     operator()(const E& ex, T&& value) const
   {
-    return {detail::dispatch_just_on(ex, std::forward<T>(value))};
+    return CUDEX_NAMESPACE::ensure_chaining_sender(detail::dispatch_just_on(ex, std::forward<T>(value)));
   }
 };
 

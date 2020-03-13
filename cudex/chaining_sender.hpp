@@ -30,6 +30,7 @@
 
 #include <type_traits>
 #include <utility>
+#include "detail/combinators/on/dispatch_on.hpp"
 #include "detail/combinators/then/dispatch_then.hpp"
 #include "detail/execution.hpp"
 
@@ -87,6 +88,37 @@ class chaining_sender
       return {detail::dispatch_then(std::move(sender_), std::forward<Function>(continuation))};
     }
 };
+
+
+// this utility allows clients (such as the sender combinator CPOs) to ensure that the senders they return
+// aren't multiply-wrapped chaining_senders
+// i.e., chaining_sender<chaining_sender<...>> is unhelpful, so let's avoid creating those
+template<class Sender,
+         CUDEX_REQUIRES(detail::execution::is_sender<Sender&&>::value),
+         CUDEX_REQUIRES(std::is_rvalue_reference<Sender&&>::value)
+        >
+CUDEX_ANNOTATION
+chaining_sender<detail::decay_t<Sender>> ensure_chaining_sender(Sender&& sender)
+{
+  return {std::move(sender)};
+}
+
+template<class Sender>
+CUDEX_ANNOTATION
+chaining_sender<Sender> ensure_chaining_sender(chaining_sender<Sender>&& sender)
+{
+  return std::move(sender);
+}
+
+
+template<class Sender>
+using ensure_chaining_sender_t = decltype(ensure_chaining_sender(std::declval<Sender>()));
+
+
+// make multiply-wrapped chaining_senders illegal for now 
+// XXX eliminate this ASAP, there might be some use case for multiple-wrapping
+template<class Sender>
+class chaining_sender<chaining_sender<Sender>>;
 
 
 CUDEX_NAMESPACE_CLOSE_BRACE

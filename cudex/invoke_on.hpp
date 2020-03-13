@@ -49,10 +49,10 @@ struct invoke_on_customization_point
            CUDEX_REQUIRES(can_dispatch_invoke_on<const E&,F&&,Args&&...>::value)
           >
   CUDEX_ANNOTATION
-  constexpr chaining_sender<dispatch_invoke_on_t<const E&,F&&,Args&&...>>
+  constexpr ensure_chaining_sender_t<dispatch_invoke_on_t<const E&,F&&,Args&&...>>
     operator()(const E& ex, F&& f, Args&&... args) const
   {
-    return {detail::dispatch_invoke_on(ex, std::forward<F>(f), std::forward<Args>(args)...)};
+    return CUDEX_NAMESPACE::ensure_chaining_sender(detail::dispatch_invoke_on(ex, std::forward<F>(f), std::forward<Args>(args)...));
   }
 };
 

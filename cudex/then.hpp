@@ -49,9 +49,10 @@ struct then_customization_point
            CUDEX_REQUIRES(can_dispatch_then<S&&,F&&>::value)
           >
   CUDEX_ANNOTATION
-  constexpr chaining_sender<dispatch_then_t<S&&,F&&>> operator()(S&& s, F&& f) const
+  constexpr ensure_chaining_sender_t<dispatch_then_t<S&&,F&&>>
+    operator()(S&& s, F&& f) const
   {
-    return {detail::dispatch_then(std::forward<S>(s), std::forward<F>(f))};
+    return CUDEX_NAMESPACE::ensure_chaining_sender(detail::dispatch_then(std::forward<S>(s), std::forward<F>(f)));
   }
 };
 
