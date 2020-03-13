@@ -28,9 +28,9 @@ The general implementation pattern of these sender types enables them to be "mul
 That means that when possible, operations that would otherwise consume a sender
 (such as `connect`), may be called multiple times.
 
-Technically, that means that these operations should have both `const` and `rvalue ref` overloads.
+Technically, that means that these operations should have both `const` and `rvalue` overloads.
 
-Moreover, good citizen senders should customize sender combinators when an efficient implementation is available.
+Moreover, good citizen senders should customize sender operations when an efficient implementation is available.
 
 To make it concrete, consider `invoke_sender`, used by `default_invoke_on`:
 
