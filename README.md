@@ -1,7 +1,7 @@
 # cudex
 CUDA executors
 
-This repository is work-in-progress of a prototype implementation of a executors-based programming model for CUDA C++.
+This repository is work-in-progress prototype implementation of a executors-based programming model for CUDA C++.
 
 Three concepts organize the model:
 
