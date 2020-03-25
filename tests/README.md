@@ -1,6 +1,4 @@
-This directory contains unit tests exercising implementation details defined beneath the `cudex` directory.
-
-These tests are intended to test implementation details complex and encapsulated enough to be validated independently of public functionality.
+This directory contains unit tests exercising functionality defined beneath the `cudex` directory.
 
 For example, To build and execute a single test program named `foo`:
 
