@@ -27,7 +27,7 @@
 #include "detail/prologue.hpp"
 
 #include "detail/execution.hpp"
-#include "detail/kernel_launch.hpp"
+#include "detail/launch_kernel.hpp"
 #include "detail/stream.hpp"
 
 
@@ -60,7 +60,7 @@ class stream_executor
     CUDEX_ANNOTATION
     void execute(Function f) const noexcept
     {
-      detail::make_kernel_launch(f, dim3(1), dim3(1), 0, stream_.native_handle(), stream_.device()).start();
+      detail::launch_kernel(f, dim3(1), dim3(1), 0, stream_.native_handle(), stream_.device());
     }
 
     CUDEX_ANNOTATION

@@ -30,7 +30,7 @@
 
 #include <cuda_runtime_api.h>
 #include <utility>
-#include "kernel_launch.hpp"
+#include "kernel_operation.hpp"
 #include "throw_on_error.hpp"
 #include "throw_runtime_error.hpp"
 
@@ -42,7 +42,7 @@ namespace detail
 
 
 template<class Function>
-class kernel
+class kernel_sender
 {
   private:
     static_assert(std::is_trivially_copyable<Function>::value, "Function must be trivially copyable.");
@@ -50,9 +50,10 @@ class kernel
     class launch_and_record_event
     {
       public:
+        // XXX this should be hoisted out of kernel_sender
         CUDEX_ANNOTATION
-        launch_and_record_event(kernel_launch<Function> kernel, cudaEvent_t successor)
-          : kernel_launch_(std::move(kernel)), successor_(successor)
+        launch_and_record_event(kernel_operation<Function> kernel, cudaEvent_t successor)
+          : kernel_op_(std::move(kernel)), successor_(successor)
         {}
 
         CUDEX_ANNOTATION
@@ -61,17 +62,17 @@ class kernel
           if(valid())
           {
             // start the kernel
-            kernel_launch_.start();
+            kernel_op_.start();
 
             // record the event
-            detail::throw_on_error(cudaEventRecord(successor_, kernel_launch_.stream()), "kernel::launch_and_record_event::start: CUDA error after cudaEventRecord");
+            detail::throw_on_error(cudaEventRecord(successor_, kernel_op_.stream()), "kernel_sender::launch_and_record_event::start: CUDA error after cudaEventRecord");
 
             // invalidate our state
             successor_ = 0;
           }
           else
           {
-            detail::throw_runtime_error("kernel::launch_and_record_event::start: Invalid state.");
+            detail::throw_runtime_error("kernel_sender::launch_and_record_event::start: Invalid state.");
           }
         }
 
@@ -82,20 +83,20 @@ class kernel
           return successor_ != 0;
         }
 
-        kernel_launch<Function> kernel_launch_;
+        kernel_operation<Function> kernel_op_;
         cudaEvent_t successor_;
     };
 
   public:
     CUDEX_ANNOTATION
-    kernel(Function f, dim3 grid_dim, dim3 block_dim, std::size_t shared_memory_size, cudaStream_t stream, int device) noexcept
-      : kernel_launch_{f, grid_dim, block_dim, shared_memory_size, stream, device}
+    kernel_sender(Function f, dim3 grid_dim, dim3 block_dim, std::size_t shared_memory_size, cudaStream_t stream, int device) noexcept
+      : kernel_op_{f, grid_dim, block_dim, shared_memory_size, stream, device}
     {}
 
     CUDEX_ANNOTATION
     launch_and_record_event connect(cudaEvent_t event) && noexcept
     {
-      return {std::move(kernel_launch_), event};
+      return {std::move(kernel_op_), event};
     }
 
     // what should we actually do in general?
@@ -107,13 +108,13 @@ class kernel
     //void connect(Receiver&& r);
 
   private:
-    kernel_launch<Function> kernel_launch_;
+    kernel_operation<Function> kernel_op_;
 };
 
 
 template<class Function>
 CUDEX_ANNOTATION
-kernel<Function> make_kernel(Function f, dim3 grid_dim, dim3 block_dim, std::size_t shared_memory_size, cudaStream_t stream, int device) noexcept
+kernel_sender<Function> make_kernel_sender(Function f, dim3 grid_dim, dim3 block_dim, std::size_t shared_memory_size, cudaStream_t stream, int device) noexcept
 {
   return {f, grid_dim, block_dim, shared_memory_size, stream, device};
 }

@@ -1,5 +1,5 @@
 #include <cassert>
-#include <cudex/detail/kernel.hpp>
+#include <cudex/detail/kernel_sender.hpp>
 
 #ifdef __CUDACC__
 
@@ -20,7 +20,7 @@ void test()
   cudaEvent_t event{};
   assert(cudaEventCreateWithFlags(&event, cudaEventDefault) == cudaSuccess);
 
-  cudex::detail::make_kernel(f, dim3(1), dim3(1), 0, 0, 0).connect(event).start();
+  cudex::detail::make_kernel_sender(f, dim3(1), dim3(1), 0, 0, 0).connect(event).start();
 
 #ifndef __CUDA_ARCH__
   assert(cudaEventSynchronize(event) == cudaSuccess);
@@ -43,7 +43,7 @@ __global__ void global_function()
 #endif // __CUDACC__
 
 
-void test_kernel()
+void test_kernel_sender()
 {
 #if __CUDACC__
   // test from host
