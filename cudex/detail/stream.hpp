@@ -31,6 +31,7 @@
 #include <cuda_runtime_api.h>
 #include "throw_on_error.hpp"
 #include "terminate.hpp"
+#include "with_current_device.hpp"
 
 
 CUDEX_NAMESPACE_OPEN_BRACE
@@ -40,73 +41,51 @@ namespace detail
 {
 
 
-template<class Function>
-CUDEX_ANNOTATION
-void with_current_device(int device, Function&& f)
-{
-  int old_device{};
-
-  detail::throw_on_error(cudaGetDevice(&old_device), "detail::with_current_device: CUDA error after cudaGetDevice");
-
-  if(device != old_device)
-  {
-#ifdef __CUDA_ARCH__
-    detail::terminate_with_message("detail::with_current_device: Requested device cannot differ from current device in __device__ code.");
-#else
-    detail::throw_on_error(cudaSetDevice(device), "detail::with_current_device: CUDA error after cudaSetDevice");
-#endif
-  }
-
-  std::forward<Function>(f)();
-
-  if(device != old_device)
-  {
-#ifndef __CUDA_ARCH__
-    detail::throw_on_error(cudaSetDevice(old_device), "detail::with_current_device: CUDA error after cudaSetDevice");
-#endif
-  }
-};
-
-
 // this is a non-owning view of a cudaStream_t
 // it provides a convenient way to associate a device with a cudaStream_t
 class stream_view
 {
   public:
     CUDEX_ANNOTATION
-    stream_view(int device, cudaStream_t native_handle)
+    inline stream_view(int device, cudaStream_t native_handle)
       : device_(device),
         native_handle_(native_handle)
+    {}
+
+    CUDEX_ANNOTATION
+    inline stream_view()
+      : device_(0),
+        native_handle_(0)
     {}
 
     stream_view(const stream_view&) = default;
 
     CUDEX_ANNOTATION
-    cudaStream_t native_handle() const
+    inline cudaStream_t native_handle() const
     {
       return native_handle_;
     }
 
     CUDEX_ANNOTATION
-    int device() const
+    inline int device() const
     {
       return device_;
     }
 
     CUDEX_ANNOTATION
-    bool operator==(const stream_view& other) const
+    inline bool operator==(const stream_view& other) const
     {
       return (device() == other.device()) and (native_handle() == other.native_handle());
     }
 
     CUDEX_ANNOTATION
-    bool operator!=(const stream_view& other) const
+    inline bool operator!=(const stream_view& other) const
     {
       return !(*this == other);
     }
 
     CUDEX_ANNOTATION
-    void synchronize() const
+    inline void synchronize() const
     {
       detail::throw_on_error(cudaStreamSynchronize(native_handle_), "detail::stream_view::synchronize: CUDA error after cudaStreamSynchronize");
     }
@@ -123,28 +102,43 @@ class stream
   public:
     // this ctor isn't explicit to make it easy to construct a vector of these from a range of integers
     CUDEX_ANNOTATION
-    stream(int device = 0)
+    inline stream(int device = 0)
       : stream_view_(make_stream(device))
     {}
 
     stream(const stream&) = delete;
 
-    CUDEX_ANNOTATION
-    inline ~stream() noexcept
+    inline stream(stream&& other)
+      : stream_view_{}
     {
-      detail::throw_on_error(cudaStreamDestroy(native_handle()), "static_stream_pool::stream::~stream: CUDA error after cudaStreamDestroy");
+      std::swap(stream_view_, other.stream_view_);
     }
 
     CUDEX_ANNOTATION
-    cudaStream_t native_handle() const
+    inline ~stream() noexcept
+    {
+      if(native_handle() != 0)
+      {
+        detail::throw_on_error(cudaStreamDestroy(native_handle()), "static_stream_pool::stream::~stream: CUDA error after cudaStreamDestroy");
+      }
+    }
+
+    CUDEX_ANNOTATION
+    inline cudaStream_t native_handle() const
     {
       return stream_view_.native_handle();
     }
 
     CUDEX_ANNOTATION
-    int device() const
+    inline int device() const
     {
       return stream_view_.device();
+    }
+
+    CUDEX_ANNOTATION
+    inline stream_view view() const
+    {
+      return stream_view_;
     }
 
   private:
