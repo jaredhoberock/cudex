@@ -24,78 +24,55 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "detail/prologue.hpp"
+#pragma once
 
-#include "detail/execution.hpp"
-#include "detail/kernel_launch.hpp"
-#include "detail/stream.hpp"
+#include "prologue.hpp"
+
+#include <cuda_runtime_api.h>
+#include <utility>
+#include "throw_on_error.hpp"
+#include "terminate.hpp"
 
 
 CUDEX_NAMESPACE_OPEN_BRACE
 
 
-class stream_executor
+namespace detail
 {
-  public:
-    CUDEX_ANNOTATION
-    inline stream_executor(cudaStream_t stream, int device)
-      : stream_{device, stream}
-    {}
 
-    CUDEX_ANNOTATION
-    inline explicit stream_executor(cudaStream_t stream)
-      : stream_executor(stream, 0)
-    {}
 
-    CUDEX_ANNOTATION
-    inline stream_executor()
-      : stream_executor(cudaStream_t{0})
-    {}
+template<class Function>
+CUDEX_ANNOTATION
+void with_current_device(int device, Function&& f)
+{
+  int old_device{};
 
-    stream_executor(const stream_executor&) = default;
+  detail::throw_on_error(cudaGetDevice(&old_device), "detail::with_current_device: CUDA error after cudaGetDevice");
 
-    template<class Function,
-             CUDEX_REQUIRES(std::is_trivially_copyable<Function>::value)
-            >
-    CUDEX_ANNOTATION
-    void execute(Function f) const noexcept
-    {
-      detail::make_kernel_launch(f, dim3(1), dim3(1), 0, stream_.native_handle(), stream_.device()).start();
-    }
+  if(device != old_device)
+  {
+#ifdef __CUDA_ARCH__
+    detail::terminate_with_message("detail::with_current_device: Requested device cannot differ from current device in __device__ code.");
+#else
+    detail::throw_on_error(cudaSetDevice(device), "detail::with_current_device: CUDA error after cudaSetDevice");
+#endif
+  }
 
-    CUDEX_ANNOTATION
-    bool operator==(const stream_executor& other) const
-    {
-      return stream_ == other.stream_;
-    }
+  std::forward<Function>(f)();
 
-    CUDEX_ANNOTATION
-    bool operator!=(const stream_executor& other) const
-    {
-      return !(*this == other);
-    }
-
-    CUDEX_ANNOTATION
-    cudaStream_t stream() const
-    {
-      return stream_.native_handle();
-    }
-
-    CUDEX_ANNOTATION
-    int device() const
-    {
-      return stream_.device();
-    }
-
-  private:
-    detail::stream_view stream_;
+  if(device != old_device)
+  {
+#ifndef __CUDA_ARCH__
+    detail::throw_on_error(cudaSetDevice(old_device), "detail::with_current_device: CUDA error after cudaSetDevice");
+#endif
+  }
 };
 
 
-static_assert(detail::execution::is_executor<stream_executor>::value, "Error.");
+} // end detail
 
 
 CUDEX_NAMESPACE_CLOSE_BRACE
 
-#include "detail/epilogue.hpp"
+#include "epilogue.hpp"
 
