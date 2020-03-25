@@ -1,0 +1,194 @@
+// Copyright (c) 2020, NVIDIA CORPORATION. All rights reserved.
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions
+// are met:
+//  * Redistributions of source code must retain the above copyright
+//    notice, this list of conditions and the following disclaimer.
+//  * Redistributions in binary form must reproduce the above copyright
+//    notice, this list of conditions and the following disclaimer in the
+//    documentation and/or other materials provided with the distribution.
+//  * Neither the name of NVIDIA CORPORATION nor the names of its
+//    contributors may be used to endorse or promote products derived
+//    from this software without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS ``AS IS'' AND ANY
+// EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+// PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+// CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+// PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
+// OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+#include "detail/prologue.hpp"
+
+#include <atomic>
+#include <cstdint>
+#include <cuda_runtime_api.h>
+#include <utility>
+#include <vector>
+#include "detail/terminate.hpp"
+#include "detail/throw_on_error.hpp"
+#include "detail/with_current_device.hpp"
+#include "stream_executor.hpp"
+
+
+CUDEX_NAMESPACE_OPEN_BRACE
+
+
+namespace detail
+{
+
+
+// this is an RAII type for cudaEvent_t
+class event
+{
+  public:
+    // this ctor isn't explicit to make it easy to construct a vector of these from a range of streams
+    CUDEX_ANNOTATION
+    inline event(cudaStream_t s)
+      : native_handle_(make_event(s))
+    {}
+
+    CUDEX_ANNOTATION
+    inline event(const stream& s)
+      : event(s.native_handle())
+    {}
+
+    CUDEX_ANNOTATION
+    event(const event&) = delete;
+
+    CUDEX_ANNOTATION
+    inline ~event() noexcept
+    {
+      detail::throw_on_error(cudaEventDestroy(native_handle()), "detail::event::~event: CUDA error after cudaEventDestroy");
+    }
+
+    CUDEX_ANNOTATION
+    cudaEvent_t native_handle() const
+    {
+      return native_handle_;
+    }
+
+  private:
+    CUDEX_ANNOTATION
+    inline static cudaEvent_t make_event(cudaStream_t s)
+    {
+      cudaEvent_t result{};
+
+      detail::throw_on_error(cudaEventCreateWithFlags(&result, cudaEventDisableTiming), "detail::event::make_event: CUDA error after cudaEventCreateWithFlags");
+      detail::throw_on_error(cudaEventRecord(result, s), "detail::event::make_event: CUDA error after cudaEventRecord");
+
+      return result;
+    }
+
+    cudaEvent_t native_handle_;
+};
+
+
+} // end detail
+
+
+class static_stream_pool
+{
+  public:
+    // static_stream_pool::executor_type is just like stream_executor
+    // except that execute cannot be called from __device__ code
+    class executor_type : private stream_executor
+    {
+      public:
+        executor_type(const executor_type&) = default;
+
+        CUDEX_ANNOTATION
+        inline bool operator==(const executor_type& other) const
+        {
+          return stream_executor::operator==(other);
+        }
+
+        CUDEX_ANNOTATION
+        inline bool operator!=(const executor_type& other) const
+        {
+          return !(*this == other);
+        }
+
+        using stream_executor::stream;
+        using stream_executor::device;
+
+        // executor_type::execute can only be called on the host
+        // because its stream was created on the host
+        template<class Function,
+                 CUDEX_REQUIRES(std::is_trivially_copyable<Function>::value)
+                >
+        void execute(Function f) const noexcept
+        {
+          stream_executor::execute(std::move(f));
+        }
+
+      private:
+        executor_type(cudaStream_t s, int d) : stream_executor{s,d} {}
+        friend class static_stream_pool;
+    };
+
+    inline static_stream_pool(int device, std::size_t num_streams)
+      : streams_(make_streams(device, num_streams)),
+        counter_{}
+    {}
+
+    static_stream_pool(const static_stream_pool&) = delete;
+
+    inline ~static_stream_pool() noexcept
+    {
+      wait();
+    }
+
+    inline void wait()
+    {
+      std::vector<detail::event> events(streams_.begin(), streams_.end());
+      
+      for(const auto& event : events)
+      {
+        detail::throw_on_error(cudaEventSynchronize(event.native_handle()), "static_stream_pool::wait: CUDA error after cudaEventSynchronize");
+      }
+    }
+
+    inline executor_type executor()
+    {
+      auto sv = stream();
+      return {sv.native_handle(), sv.device()};
+    }
+
+  private:
+    inline static std::vector<detail::stream> make_streams(int device, std::size_t num_streams)
+    {
+      std::vector<detail::stream> result;
+
+      for(std::size_t i = 0; i < num_streams; ++i)
+      {
+        result.emplace_back(device);
+      }
+
+      return result;
+    }
+
+    inline detail::stream_view stream()
+    {
+      // round-robin through streams
+      std::size_t i = (counter_++) % streams_.size();
+      return streams_[i].view();
+    }
+
+    // XXX these need to be in managed memory
+    // XXX this needn't be a vector because we don't need resize
+    const std::vector<detail::stream> streams_;
+    std::atomic<std::size_t> counter_;
+};
+
+
+CUDEX_NAMESPACE_CLOSE_BRACE
+
+#include "detail/epilogue.hpp"
+
