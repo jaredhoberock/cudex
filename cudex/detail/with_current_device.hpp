@@ -24,7 +24,55 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "detail/prologue.hpp"
+#pragma once
 
-#include "detail/epilogue.hpp"
+#include "prologue.hpp"
+
+#include <cuda_runtime_api.h>
+#include <utility>
+#include "throw_on_error.hpp"
+#include "terminate.hpp"
+
+
+CUDEX_NAMESPACE_OPEN_BRACE
+
+
+namespace detail
+{
+
+
+template<class Function>
+CUDEX_ANNOTATION
+void with_current_device(int device, Function&& f)
+{
+  int old_device{};
+
+  detail::throw_on_error(cudaGetDevice(&old_device), "detail::with_current_device: CUDA error after cudaGetDevice");
+
+  if(device != old_device)
+  {
+#ifdef __CUDA_ARCH__
+    detail::terminate_with_message("detail::with_current_device: Requested device cannot differ from current device in __device__ code.");
+#else
+    detail::throw_on_error(cudaSetDevice(device), "detail::with_current_device: CUDA error after cudaSetDevice");
+#endif
+  }
+
+  std::forward<Function>(f)();
+
+  if(device != old_device)
+  {
+#ifndef __CUDA_ARCH__
+    detail::throw_on_error(cudaSetDevice(old_device), "detail::with_current_device: CUDA error after cudaSetDevice");
+#endif
+  }
+};
+
+
+} // end detail
+
+
+CUDEX_NAMESPACE_CLOSE_BRACE
+
+#include "epilogue.hpp"
 
