@@ -26,5 +26,60 @@
 
 #include "detail/prologue.hpp"
 
+#include "detail/kernel_launch.hpp"
+#include "detail/stream.hpp"
+
+
+CUDEX_NAMESPACE_OPEN_BRACE
+
+
+class stream_executor
+{
+  public:
+    CUDEX_ANNOTATION
+    inline explicit stream_executor(cudaStream_t stream = {}, int device = 0)
+      : stream_{device, stream}
+    {}
+
+    template<class Function,
+             CUDEX_REQUIRES(std::is_trivially_copyable<Function>::value)
+            >
+    CUDEX_ANNOTATION
+    void execute(Function f) const noexcept
+    {
+      detail::make_kernel_launch(f, dim3(1), dim3(1), 0, stream_.native_handle(), stream_.device()).start();
+    }
+
+    CUDEX_ANNOTATION
+    bool operator==(const stream_executor& other) const
+    {
+      return stream_ == other.stream_;
+    }
+
+    CUDEX_ANNOTATION
+    bool operator!=(const stream_executor& other) const
+    {
+      return !(*this == other);
+    }
+
+    CUDEX_ANNOTATION
+    cudaStream_t stream() const
+    {
+      return stream_.native_handle();
+    }
+
+    CUDEX_ANNOTATION
+    int device() const
+    {
+      return stream_.device();
+    }
+
+  private:
+    detail::stream_view stream_;
+};
+
+
+CUDEX_NAMESPACE_CLOSE_BRACE
+
 #include "detail/epilogue.hpp"
 
