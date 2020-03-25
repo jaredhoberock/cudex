@@ -31,6 +31,7 @@
 #include <cuda_runtime_api.h>
 #include <utility>
 #include <vector>
+#include "detail/event.hpp"
 #include "detail/terminate.hpp"
 #include "detail/throw_on_error.hpp"
 #include "detail/with_current_device.hpp"
@@ -38,59 +39,6 @@
 
 
 CUDEX_NAMESPACE_OPEN_BRACE
-
-
-namespace detail
-{
-
-
-// this is an RAII type for cudaEvent_t
-class event
-{
-  public:
-    // this ctor isn't explicit to make it easy to construct a vector of these from a range of streams
-    CUDEX_ANNOTATION
-    inline event(cudaStream_t s)
-      : native_handle_(make_event(s))
-    {}
-
-    CUDEX_ANNOTATION
-    inline event(const stream& s)
-      : event(s.native_handle())
-    {}
-
-    CUDEX_ANNOTATION
-    event(const event&) = delete;
-
-    CUDEX_ANNOTATION
-    inline ~event() noexcept
-    {
-      detail::throw_on_error(cudaEventDestroy(native_handle()), "detail::event::~event: CUDA error after cudaEventDestroy");
-    }
-
-    CUDEX_ANNOTATION
-    cudaEvent_t native_handle() const
-    {
-      return native_handle_;
-    }
-
-  private:
-    CUDEX_ANNOTATION
-    inline static cudaEvent_t make_event(cudaStream_t s)
-    {
-      cudaEvent_t result{};
-
-      detail::throw_on_error(cudaEventCreateWithFlags(&result, cudaEventDisableTiming), "detail::event::make_event: CUDA error after cudaEventCreateWithFlags");
-      detail::throw_on_error(cudaEventRecord(result, s), "detail::event::make_event: CUDA error after cudaEventRecord");
-
-      return result;
-    }
-
-    cudaEvent_t native_handle_;
-};
-
-
-} // end detail
 
 
 class static_stream_pool

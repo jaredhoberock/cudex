@@ -29,8 +29,9 @@
 #include "prologue.hpp"
 
 #include <cuda_runtime_api.h>
-#include <utility>
-#include "kernel_operation.hpp"
+#include "stream.hpp"
+#include "throw_on_error.hpp"
+
 
 CUDEX_NAMESPACE_OPEN_BRACE
 
@@ -39,57 +40,61 @@ namespace detail
 {
 
 
-template<class Function>
-class kernel_sender
+// this is an RAII type for cudaEvent_t
+class event
 {
-  private:
-    static_assert(std::is_trivially_copyable<Function>::value, "Function must be trivially copyable.");
-
   public:
+    // this ctor isn't explicit to make it easy to construct a vector of these from a range of streams
     CUDEX_ANNOTATION
-    kernel_sender(Function kernel, dim3 grid_dim, dim3 block_dim, std::size_t shared_memory_size, cudaStream_t stream, int device) noexcept
-      : kernel_(kernel),
-        grid_dim_(grid_dim),
-        block_dim_(block_dim),
-        shared_memory_size_(shared_memory_size),
-        stream_(stream),
-        device_(device)
+    inline event(cudaStream_t s)
+      : native_handle_(make_event(s))
     {}
 
     CUDEX_ANNOTATION
-    recorded_kernel_operation<Function> connect(cudaEvent_t recording_event) && noexcept
+    inline event(const stream& s)
+      : event(s.native_handle())
+    {}
+
+    CUDEX_ANNOTATION
+    event(event&& other)
+      : native_handle_{}
     {
-      return {kernel_, grid_dim_, block_dim_, shared_memory_size_, stream_, device_, recording_event};
+      native_handle_ = other.native_handle_;
+      other.native_handle_ = {};
     }
 
-    // what should we actually do in general?
-    // run the receiver in a host callback?
-    // enqueue the receiver on a thread pool?
-    //template<class Receiver,
-    //         CUDEX_REQUIRES(is_receiver<Receiver>::value)
-    //        >
-    //void connect(Receiver&& r);
+    CUDEX_ANNOTATION
+    inline ~event() noexcept
+    {
+      if(native_handle_)
+      {
+        detail::throw_on_error(cudaEventDestroy(native_handle()), "detail::event::~event: CUDA error after cudaEventDestroy");
+      }
+    }
+
+    CUDEX_ANNOTATION
+    cudaEvent_t native_handle() const
+    {
+      return native_handle_;
+    }
 
   private:
-    Function kernel_;
-    dim3 grid_dim_;
-    dim3 block_dim_;
-    std::size_t shared_memory_size_;
-    cudaStream_t stream_;
-    int device_;
+    CUDEX_ANNOTATION
+    inline static cudaEvent_t make_event(cudaStream_t s)
+    {
+      cudaEvent_t result{};
+
+      detail::throw_on_error(cudaEventCreateWithFlags(&result, cudaEventDisableTiming), "detail::event::make_event: CUDA error after cudaEventCreateWithFlags");
+      detail::throw_on_error(cudaEventRecord(result, s), "detail::event::make_event: CUDA error after cudaEventRecord");
+
+      return result;
+    }
+
+    cudaEvent_t native_handle_;
 };
 
 
-template<class Function>
-CUDEX_ANNOTATION
-kernel_sender<Function> make_kernel_sender(Function f, dim3 grid_dim, dim3 block_dim, std::size_t shared_memory_size, cudaStream_t stream, int device) noexcept
-{
-  return {f, grid_dim, block_dim, shared_memory_size, stream, device};
-}
-
-
 } // end detail
-
 
 CUDEX_NAMESPACE_CLOSE_BRACE
 
