@@ -48,10 +48,28 @@ template<class Receiver, class Function>
 class then_receiver
 {
   public:
+    CUDEX_EXEC_CHECK_DISABLE
+    template<class R, class F,
+             CUDEX_REQUIRES(std::is_constructible<Receiver,R&&>::value),
+             CUDEX_REQUIRES(std::is_constructible<Function,F&&>::value)
+            >
     CUDEX_ANNOTATION
-    then_receiver(Receiver receiver, Function f)
-      : receiver_(std::move(receiver)), f_(std::move(f))
+    then_receiver(R&& receiver, F&& f)
+      : receiver_{std::forward<R>(receiver)},
+        f_{std::forward<F>(f)}
     {}
+
+    CUDEX_EXEC_CHECK_DISABLE
+    CUDEX_ANNOTATION
+    then_receiver(then_receiver&& other) noexcept
+      : receiver_{std::move(other.receiver_)},
+        f_{std::move(other.f_)}
+    {}
+
+    CUDEX_EXEC_CHECK_DISABLE
+    CUDEX_ANNOTATION
+    ~then_receiver() noexcept {}
+
 
     // Function returns void case
     template<class... Args, class Result = invoke_result_t<Function, Args...>,
