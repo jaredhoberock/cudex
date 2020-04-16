@@ -8,8 +8,8 @@
 // and that these macros should be undefined by epilogue.hpp
 #define CUDEX_INCLUDE_LEVEL 0
 
-// include configuration headers
-#include "config.hpp"
+// include preprocessor headers
+#include "preprocessor.hpp"
 
 #else
 

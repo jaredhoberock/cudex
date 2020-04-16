@@ -13,9 +13,9 @@
 
 #undef CUDEX_INCLUDE_LEVEL
 
-// include configuration headers
+// include preprocessor headers
 
-#include "config.hpp"
+#include "preprocessor.hpp"
 
 #endif
 
