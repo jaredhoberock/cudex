@@ -18,6 +18,7 @@
 // this push to the stack communicates with epilogue.hpp
 // that these macros are not ready to be undefined.
 #pragma push_macro("CUDEX_INCLUDE_LEVEL")
+#undef CUDEX_INCLUDE_LEVEL
 #define CUDEX_INCLUDE_LEVEL 1
 
 #endif
