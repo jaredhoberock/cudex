@@ -17,17 +17,22 @@ namespace detail
 {
 
 
+// XXX the try/catch below should be guarded with __has_exceptions or similar
+
+
 template<class R>
 class receiver_as_invocable
 {
   private:
     using receiver_type = remove_cvref_t<R>;
 
-    // XXX better to use std::optional when available
+    // XXX better to replace these members with a __host__ __device__ optional<receiver_type> type when available
+    //     once we do that, we can eliminate the P0443_EXEC_CHECK_DISABLE below
     receiver_type r_;
     bool valid_;
 
   public:
+    P0443_EXEC_CHECK_DISABLE
     P0443_ANNOTATION
     explicit receiver_as_invocable(receiver_type&& r)
       try : r_(detail::move_if_noexcept(r)), valid_(true) {}
@@ -36,6 +41,7 @@ class receiver_as_invocable
         P0443_NAMESPACE::set_error(r, std::current_exception());
       }
 
+    P0443_EXEC_CHECK_DISABLE
     P0443_ANNOTATION
     explicit receiver_as_invocable(const receiver_type& r)
       try : r_(r), valid_(true) {}
@@ -44,6 +50,7 @@ class receiver_as_invocable
         P0443_NAMESPACE::set_error(r, std::current_exception());
       }
 
+    P0443_EXEC_CHECK_DISABLE
     P0443_ANNOTATION
     receiver_as_invocable(receiver_as_invocable&& other)
       try : r_(detail::move_if_noexcept(other.r_)), valid_(other.valid_)
@@ -55,6 +62,7 @@ class receiver_as_invocable
         P0443_NAMESPACE::set_error(other.receiver_, std::current_exception());
       }
 
+    P0443_EXEC_CHECK_DISABLE
     P0443_ANNOTATION
     ~receiver_as_invocable()
     {

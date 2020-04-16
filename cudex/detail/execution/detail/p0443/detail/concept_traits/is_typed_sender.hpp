@@ -15,7 +15,7 @@ namespace detail
 
 
 template<class T>
-using is_typed_sender = detail::conjunction<is_sender<T>, has_sender_traits<remove_cvref_t<T>>>;
+using is_typed_sender = detail::conjunction<is_sender<T>, has_sender_types<remove_cvref_t<T>>>;
 
 
 } // end detail

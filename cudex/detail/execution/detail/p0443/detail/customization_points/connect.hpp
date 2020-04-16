@@ -63,6 +63,17 @@ const __device__ detail::connect_customization_point connect;
 } // end anonymous namespace
 
 
+namespace detail
+{
+
+
+template<class S, class R>
+using connect_t = decltype(P0443_NAMESPACE::connect(std::declval<S>(), std::declval<R>()));
+
+
+} // end detail
+
+
 P0443_NAMESPACE_CLOSE_BRACE
 
 #include "../epilogue.hpp"

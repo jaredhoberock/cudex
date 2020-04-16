@@ -3,6 +3,7 @@
 #include "prologue.hpp"
 
 #include <type_traits>
+#include "sender_base.hpp"
 #include "type_traits/standard_traits.hpp"
 
 
@@ -87,30 +88,22 @@ struct has_sends_done
 
 
 template<class T>
-using has_sender_traits = detail::conjunction<has_value_types<T>, has_error_types<T>, has_sends_done<T>>;
+using has_sender_types = detail::conjunction<has_value_types<T>, has_error_types<T>, has_sends_done<T>>;
 
 
 template<class S, class Enable = void>
-struct sender_traits_base {};
+struct sender_traits_base
+{
+  using __unspecialized = void;
+};
 
-// If S is a reference, strip the reference and implement with sender_traits
+
+// If S has sender types, use them
 template<class S>
-struct sender_traits_base<S,
+struct sender_traits_base<
+  S,
   typename std::enable_if<
-    !std::is_same<
-      S, remove_cvref_t<S>
-    >::value
-  >::type
-> : sender_traits<remove_cvref_t<S>>
-{};
-
-
-template<class S>
-struct sender_traits_base<S,
-  typename std::enable_if<
-    std::is_same<S, remove_cvref_t<S>>::value and
-    is_sender<S>::value and
-    has_sender_traits<S>::value
+    has_sender_types<S>::value
   >::type
 >
 {
@@ -124,11 +117,36 @@ struct sender_traits_base<S,
 };
 
 
+// XXX Otherwise, if executor-of-impl<S,as-invocable<void-receiver, S>> is true, then sender-traits-base is equivalent to
+// XXX TODO
+
+
+// Otherwise, if S does not have sender types, and S is derived from sender_base
+template<class Derived, class Base>
+using is_derived_from = std::integral_constant<
+  bool,
+  std::is_base_of<Base,Derived>::value and
+  std::is_convertible<const volatile Derived*, const volatile Base*>::value
+>;
+
+template<class S>
+struct sender_traits_base<
+  S,
+  typename std::enable_if<
+    !has_sender_types<S>::value and
+    is_derived_from<S, sender_base>::value
+  >::type
+>
+{
+  // empty
+};
+
+
 } // end detail
 
 
 template<class S>
-struct sender_traits : detail::sender_traits_base<S> {};
+struct sender_traits : detail::sender_traits_base<detail::remove_cvref_t<S>> {};
 
 
 P0443_NAMESPACE_CLOSE_BRACE

@@ -3,9 +3,11 @@
 #include "../prologue.hpp"
 
 #include <type_traits>
+#include "../customization_points/connect.hpp"
 #include "../type_traits/is_detected.hpp"
 #include "../type_traits/standard_traits.hpp"
-#include "../customization_points/submit.hpp"
+#include "is_sender.hpp"
+#include "is_receiver.hpp"
 
 
 P0443_NAMESPACE_OPEN_BRACE
@@ -16,13 +18,10 @@ namespace detail
 
 
 template<class S, class R>
-using submit_t = decltype(P0443_NAMESPACE::submit(std::declval<S>(), std::declval<R>()));
-
-
-template<class S, class R>
-using is_sender_to = std::integral_constant<
-  bool,
-  is_detected<submit_t, S, R>::value and std::is_move_constructible<remove_cvref_t<S>>::value
+using is_sender_to = conjunction<
+  is_sender<S>,
+  is_receiver<R>,
+  is_detected<connect_t, S, R>
 >;
 
 

@@ -27,12 +27,11 @@ using set_error_t = decltype(P0443_NAMESPACE::set_error(std::declval<R>(), std::
 
 
 template<class R, class E = std::exception_ptr>
-using is_receiver = std::integral_constant<
-  bool,
-  std::is_move_constructible<remove_cvref_t<R>>::value and
-  is_nothrow_move_or_copy_constructible<remove_cvref_t<R>>::value and
-  is_detected<set_done_t, R>::value and
-  is_detected<set_error_t, R, E>::value
+using is_receiver = conjunction<
+  std::is_move_constructible<remove_cvref_t<R>>,
+  is_nothrow_move_or_copy_constructible<remove_cvref_t<R>>,
+  is_detected<set_done_t, R>,
+  is_detected<set_error_t, R, E>
 >;
 
 

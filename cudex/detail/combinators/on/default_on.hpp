@@ -42,7 +42,7 @@ namespace detail
 
 
 template<class Sender, class Executor>
-class on_sender 
+class on_sender : public execution::sender_base
 {
   public:
     CUDEX_EXEC_CHECK_DISABLE

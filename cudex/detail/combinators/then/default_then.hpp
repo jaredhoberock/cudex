@@ -107,7 +107,7 @@ then_receiver<decay_t<Receiver>, decay_t<Function>> make_then_receiver(Receiver&
 
 
 template<class Sender, class Function>
-class then_sender
+class then_sender : public execution::sender_base
 {
   private:
     Sender predecessor_;

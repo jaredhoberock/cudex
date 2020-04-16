@@ -47,6 +47,7 @@ class chaining_sender
 
   public:
     template<class OtherSender,
+             CUDEX_REQUIRES(detail::execution::is_sender<OtherSender&&>::value),
              CUDEX_REQUIRES(std::is_constructible<Sender,OtherSender&&>::value)
             >
     CUDEX_ANNOTATION
@@ -99,6 +100,21 @@ class chaining_sender
       return {detail::dispatch_on(std::move(sender_), ex)};
     }
 };
+
+
+namespace detail
+{
+namespace execution
+{
+
+
+// specialize sender_traits
+template<class Sender>
+struct sender_traits<chaining_sender<Sender>> : sender_traits<Sender> {};
+
+
+} // end execution
+} // end detail
 
 
 // this utility allows clients (such as the sender combinator CPOs) to ensure that the senders they return

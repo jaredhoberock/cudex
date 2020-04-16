@@ -35,6 +35,7 @@
 #include "../../functional/compose.hpp"
 #include "../../receiver_as_invocable.hpp"
 #include "../../type_traits/is_invocable.hpp"
+#include "../../execution.hpp"
 
 
 CUDEX_NAMESPACE_OPEN_BRACE
@@ -46,7 +47,7 @@ namespace detail
 
 // this is a sender that invokes a function on an executor and sends the result to a receiver
 template<class Executor, class Invocable>
-class invoke_sender
+class invoke_sender : public execution::sender_base
 {
   public:
     template<class OtherInvocable,
