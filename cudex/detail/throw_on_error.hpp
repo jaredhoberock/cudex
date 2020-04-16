@@ -29,7 +29,8 @@
 #include "prologue.hpp"
 
 #include <cstdio>
-#include <exception>
+#include <stdexcept>
+#include <string>
 #include "terminate.hpp"
 
 
@@ -47,6 +48,7 @@ inline void print_error_message(cudaError_t e, const char* message) noexcept
 #if CUDEX_HAS_CUDART
   printf("Error after %s: %s\n", message, cudaGetErrorString(e));
 #else
+  (void)e; // silence unused variable warning
   printf("Error: %s\n", message);
 #endif
 }
