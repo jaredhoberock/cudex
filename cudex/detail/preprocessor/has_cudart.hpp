@@ -11,7 +11,7 @@
 #      define CUDEX_HAS_CUDART 0
 #    endif
 #  else
-#    define CUDEX_HAS_CUDART 0
+#    define CUDEX_HAS_CUDART __has_include(<cuda_runtime_api.h>)
 #  endif
 
 #elif defined(CUDEX_HAS_CUDART)

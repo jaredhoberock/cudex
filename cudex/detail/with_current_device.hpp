@@ -48,7 +48,7 @@ void with_current_device(int device, Function&& f)
 {
   int old_device = -1;
 
-#if (__CUDA_ARCH__ == 0) or CUDEX_HAS_CUDART
+#if CUDEX_HAS_CUDART
   detail::throw_on_error(cudaGetDevice(&old_device), "detail::with_current_device: CUDA error after cudaGetDevice");
 #else
   detail::throw_runtime_error("detail::with_current_device: cudaGetDevice is unavailable.");

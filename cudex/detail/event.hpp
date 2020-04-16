@@ -78,7 +78,7 @@ class event
     {
       if(native_handle_)
       {
-#if (__CUDA_ARCH__ == 0) or CUDEX_HAS_CUDART
+#if CUDEX_HAS_CUDART
         detail::throw_on_error(cudaEventDestroy(native_handle()), "detail::event::~event: CUDA error after cudaEventDestroy");
 #else
         detail::terminate_with_message("detail::event::~event: cudaEventDestroy is unavailable.");
