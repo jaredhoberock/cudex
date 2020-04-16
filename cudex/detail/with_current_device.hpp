@@ -31,6 +31,7 @@
 #include <cuda_runtime_api.h>
 #include <utility>
 #include "throw_on_error.hpp"
+#include "throw_runtime_error.hpp"
 #include "terminate.hpp"
 
 
@@ -45,9 +46,13 @@ template<class Function>
 CUDEX_ANNOTATION
 void with_current_device(int device, Function&& f)
 {
-  int old_device{};
+  int old_device = -1;
 
+#if (__CUDA_ARCH__ == 0) or CUDEX_HAS_CUDART
   detail::throw_on_error(cudaGetDevice(&old_device), "detail::with_current_device: CUDA error after cudaGetDevice");
+#else
+  detail::throw_runtime_error("detail::with_current_device: cudaGetDevice is unavailable.");
+#endif
 
   if(device != old_device)
   {
