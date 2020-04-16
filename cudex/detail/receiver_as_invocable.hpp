@@ -50,12 +50,14 @@ class receiver_as_invocable
 
     static_assert(execution::is_receiver<receiver_type>::value, "Error.h");
 
-    // XXX better to replace these members with std::optional<receiver_type> when available
+    // XXX better to replace these members with a __host__ __device__ optional<receiver_type> type when available
+    //     once we do that, we can eliminate the CUDEX_EXEC_CHECK_DISABLE below
     receiver_type r_;
     bool valid_;
 
 
   public:
+    CUDEX_EXEC_CHECK_DISABLE
     CUDEX_ANNOTATION
     explicit receiver_as_invocable(receiver_type&& r)
 #if CUDEX_HAS_EXCEPTIONS
@@ -69,6 +71,7 @@ class receiver_as_invocable
 #endif
 
 
+    CUDEX_EXEC_CHECK_DISABLE
     CUDEX_ANNOTATION
     explicit receiver_as_invocable(const receiver_type& r)
 #if CUDEX_HAS_EXCEPTIONS
@@ -83,6 +86,7 @@ class receiver_as_invocable
 
 
 #if CUDEX_HAS_EXCEPTIONS
+    CUDEX_EXEC_CHECK_DISABLE
     CUDEX_ANNOTATION
     receiver_as_invocable(receiver_as_invocable&& other)
       try : r_(detail::move_if_noexcept(other.r_)), valid_(other.valid_)
@@ -95,6 +99,7 @@ class receiver_as_invocable
         other.valid_ = false;
       }
 #else
+    CUDEX_EXEC_CHECK_DISABLE
     CUDEX_ANNOTATION
     receiver_as_invocable(receiver_as_invocable&& other)
       : r_(detail::move_if_noexcept(other.r_)), valid_(other.valid_)
@@ -104,12 +109,14 @@ class receiver_as_invocable
 #endif
 
 
+    CUDEX_EXEC_CHECK_DISABLE
     CUDEX_ANNOTATION
     receiver_as_invocable(const receiver_as_invocable& other) noexcept
       : r_(other.r_), valid_(other.valid_)
     {}
 
 
+    CUDEX_EXEC_CHECK_DISABLE
     CUDEX_ANNOTATION
     ~receiver_as_invocable()
     {
