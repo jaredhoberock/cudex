@@ -109,7 +109,11 @@ class event
         native_handle_ = make_event();
       }
 
+#if (__CUDA_ARCH__ == 0) or CUDEX_HAS_CUDART
       detail::throw_on_error(cudaEventRecord(native_handle(), s), "detail::event::record_on: CUDA error after cudaEventRecord");
+#else
+      detail::throw_runtime_error("detail::event::record_on: cudaEventRecord is unavailable.");
+#endif
     }
 
     void wait() const
