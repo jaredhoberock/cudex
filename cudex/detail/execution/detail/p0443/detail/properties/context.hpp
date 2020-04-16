@@ -18,7 +18,7 @@ struct context_t :
     false,
     false
 #if __cpp_lib_any
-    , detail::query_result_type
+    , std::any
 #endif
 >
 {};

@@ -20,6 +20,7 @@
 // this push to the stack communicates with epilogue.hpp
 // that these macros are not ready to be undefined.
 #pragma push_macro("P0443_INCLUDE_LEVEL")
+#undef P0443_INCLUDE_LEVEL
 #define P0443_INCLUDE_LEVEL 1
 
 #endif
