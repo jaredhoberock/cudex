@@ -47,12 +47,19 @@ class event
     // this ctor isn't explicit to make it easy to construct a vector of these from a range of streams
     CUDEX_ANNOTATION
     inline event(cudaStream_t s)
-      : native_handle_(make_event(s))
-    {}
+      : native_handle_(make_event())
+    {
+      record_on(s);
+    }
 
     CUDEX_ANNOTATION
     inline event(const stream& s)
       : event(s.native_handle())
+    {}
+
+    CUDEX_ANNOTATION
+    inline event()
+      : native_handle_{}
     {}
 
     CUDEX_ANNOTATION
@@ -62,6 +69,8 @@ class event
       native_handle_ = other.native_handle_;
       other.native_handle_ = {};
     }
+
+    event(const event&) = delete;
 
     CUDEX_ANNOTATION
     inline ~event() noexcept
@@ -73,20 +82,45 @@ class event
     }
 
     CUDEX_ANNOTATION
+    event& operator=(event&& other)
+    {
+      cudaEvent_t tmp = native_handle_;
+      native_handle_ = other.native_handle_;
+      other.native_handle_ = tmp;
+      return *this;
+    }
+
+    CUDEX_ANNOTATION
     cudaEvent_t native_handle() const
     {
       return native_handle_;
     }
 
+    CUDEX_ANNOTATION
+    void record_on(cudaStream_t s)
+    {
+      if(!native_handle())
+      {
+        native_handle_ = make_event();
+      }
+
+      detail::throw_on_error(cudaEventRecord(native_handle(), s), "detail::event::record_on: CUDA error after cudaEventRecord");
+    }
+
+    void wait() const
+    {
+      if(native_handle())
+      {
+        detail::throw_on_error(cudaEventSynchronize(native_handle()), "detail::event::wait: CUDA error after cudaEventSynchronize");
+      }
+    }
+
   private:
     CUDEX_ANNOTATION
-    inline static cudaEvent_t make_event(cudaStream_t s)
+    inline static cudaEvent_t make_event()
     {
       cudaEvent_t result{};
-
       detail::throw_on_error(cudaEventCreateWithFlags(&result, cudaEventDisableTiming), "detail::event::make_event: CUDA error after cudaEventCreateWithFlags");
-      detail::throw_on_error(cudaEventRecord(result, s), "detail::event::make_event: CUDA error after cudaEventRecord");
-
       return result;
     }
 
