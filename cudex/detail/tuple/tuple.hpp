@@ -177,7 +177,7 @@ using tuple_make_index_sequence = typename tuple_make_index_sequence_impl<0, tup
 
 
 template<class T>
-struct tuple_use_empty_base_class_optimization
+struct use_empty_base_class_optimization
   : std::integral_constant<
       bool,
       std::is_empty<T>::value
@@ -188,12 +188,104 @@ struct tuple_use_empty_base_class_optimization
 {};
 
 
-template<class T, bool = tuple_use_empty_base_class_optimization<T>::value>
-class tuple_leaf_base
+template<class T>
+using tuple_leaf_base_case = typename std::conditional<
+  // the empty T case is case 0
+  std::is_empty<T>::value,
+  std::integral_constant<int,0>,
+
+  typename std::conditional<
+    std::is_trivially_copyable<T>::value,
+
+    // the trivially copyable T case is case 1
+    std::integral_constant<int,1>,
+
+    // the general case is case 2
+    std::integral_constant<int,2>
+  >::type
+>::type;
+
+
+template<class T, int = tuple_leaf_base_case<T>::value>
+class tuple_leaf_base;
+
+
+// This specialization handles the case when T is empty
+// The reason we don't inherit from T to get the empty base class optimization
+// is because the inheritance creates ambiguity in cases like
+//
+//     tuple<empty, tuple<empty>> or
+//
+//     In this example, the outer tuple would end up inheriting from tuple_leaf<0,empty> twice
+//
+//  Note that if T's ctors, dtor, or assignments have effects, this implementation ends up ignoring them
+//  in favor of trival copyability
+//
+template<class T>
+class tuple_leaf_base<T,0>
 {
   public:
     TUPLE_EXEC_CHECK_DISABLE
     tuple_leaf_base() = default;
+
+    TUPLE_EXEC_CHECK_DISABLE
+    tuple_leaf_base(const tuple_leaf_base&) = default;
+
+    TUPLE_EXEC_CHECK_DISABLE
+    tuple_leaf_base(tuple_leaf_base&&) = default;
+
+    TUPLE_EXEC_CHECK_DISABLE
+    template<class U>
+    TUPLE_ANNOTATION
+    tuple_leaf_base(U&& arg)
+    {
+      // invoke T's ctor only for its effects
+      new(&mutable_get()) T{std::forward<U>(arg)};
+    }
+
+    TUPLE_EXEC_CHECK_DISABLE
+    ~tuple_leaf_base() = default;
+
+    TUPLE_EXEC_CHECK_DISABLE
+    tuple_leaf_base& operator=(const tuple_leaf_base&) = default;
+
+    TUPLE_EXEC_CHECK_DISABLE
+    tuple_leaf_base& operator=(tuple_leaf_base&&) = default;
+
+    TUPLE_ANNOTATION
+    const T& const_get() const
+    {
+      return *reinterpret_cast<const T*>(this);
+    }
+  
+    TUPLE_ANNOTATION
+    T& mutable_get()
+    {
+      return *reinterpret_cast<T*>(this);
+    }
+
+  private:
+    // exposition only
+    // T value_;
+};
+
+
+
+
+// This specialization handles the case when T is trivially-copyable
+template<class T>
+class tuple_leaf_base<T,1>
+{
+  public:
+    TUPLE_EXEC_CHECK_DISABLE
+    TUPLE_ANNOTATION
+    tuple_leaf_base() : val_{} {}
+
+    TUPLE_EXEC_CHECK_DISABLE
+    tuple_leaf_base(const tuple_leaf_base&) = default;
+
+    TUPLE_EXEC_CHECK_DISABLE
+    tuple_leaf_base(tuple_leaf_base&&) = default;
 
     TUPLE_EXEC_CHECK_DISABLE
     template<class U>
@@ -202,6 +294,12 @@ class tuple_leaf_base
 
     TUPLE_EXEC_CHECK_DISABLE
     ~tuple_leaf_base() = default;
+
+    TUPLE_EXEC_CHECK_DISABLE
+    tuple_leaf_base& operator=(const tuple_leaf_base&) = default;
+
+    TUPLE_EXEC_CHECK_DISABLE
+    tuple_leaf_base& operator=(tuple_leaf_base&&) = default;
 
     TUPLE_ANNOTATION
     const T& const_get() const
@@ -219,28 +317,86 @@ class tuple_leaf_base
     T val_;
 };
 
+
+// this specialization handles the general case
 template<class T>
-class tuple_leaf_base<T,true> : public T
+class tuple_leaf_base<T,2>
 {
   public:
+    TUPLE_EXEC_CHECK_DISABLE
     tuple_leaf_base() = default;
 
-    template<class U>
+    TUPLE_EXEC_CHECK_DISABLE
+    tuple_leaf_base(const tuple_leaf_base&) = default;
+
+    TUPLE_EXEC_CHECK_DISABLE
+    tuple_leaf_base(tuple_leaf_base&&) = default;
+
+    TUPLE_EXEC_CHECK_DISABLE
+    template<class U,
+             class = typename std::enable_if<
+               std::is_constructible<T,U>::value
+             >::type>
     TUPLE_ANNOTATION
-    tuple_leaf_base(U&& arg) : T(std::forward<U>(arg)) {}
+    tuple_leaf_base(U&& arg) : val_{std::forward<U>(arg)} {}
+
+    TUPLE_EXEC_CHECK_DISABLE
+    ~tuple_leaf_base() = default;
+
+    TUPLE_EXEC_CHECK_DISABLE
+    tuple_leaf_base& operator=(const tuple_leaf_base& other)
+    {
+      val_ = other.const_get();
+      return *this;
+    }
+
+    TUPLE_EXEC_CHECK_DISABLE
+    template<class U, int I,
+             class = typename std::enable_if<
+               std::is_assignable<T,const U&>::value
+             >::type>
+    TUPLE_ANNOTATION
+    tuple_leaf_base& operator=(const tuple_leaf_base<U,I>& other)
+    {
+      val_ = other.const_get();
+      return *this;
+    }
+
+    TUPLE_EXEC_CHECK_DISABLE
+    tuple_leaf_base& operator=(tuple_leaf_base&& other)
+    {
+      val_ = std::forward<T>(other.mutable_get());
+      return *this;
+    }
+
+    TUPLE_EXEC_CHECK_DISABLE
+    template<class U, int I,
+             class = typename std::enable_if<
+               std::is_assignable<T,U&&>::value
+             >::type>
+    TUPLE_ANNOTATION
+    tuple_leaf_base& operator=(tuple_leaf_base<U,I>&& other)
+    {
+      val_ = std::forward<U>(other.mutable_get());
+      return *this;
+    }
 
     TUPLE_ANNOTATION
     const T& const_get() const
     {
-      return *this;
+      return val_;
     }
-  
+
     TUPLE_ANNOTATION
     T& mutable_get()
     {
-      return *this;
+      return val_;
     }
+
+  private:
+    T val_;
 };
+
 
 template<size_t I, class T>
 class tuple_leaf : public tuple_leaf_base<T>
@@ -258,11 +414,9 @@ class tuple_leaf : public tuple_leaf_base<T>
     TUPLE_ANNOTATION
     tuple_leaf(U&& arg) : super_t(std::forward<U>(arg)) {}
 
-    TUPLE_ANNOTATION
-    tuple_leaf(const tuple_leaf& other) : super_t(other.const_get()) {}
+    tuple_leaf(const tuple_leaf&) = default;
 
-    TUPLE_ANNOTATION
-    tuple_leaf(tuple_leaf&& other) : super_t(std::forward<T>(other.mutable_get())) {}
+    tuple_leaf(tuple_leaf&&) = default;
 
     template<class U,
              class = typename std::enable_if<
@@ -270,6 +424,10 @@ class tuple_leaf : public tuple_leaf_base<T>
              >::type>
     TUPLE_ANNOTATION
     tuple_leaf(const tuple_leaf<I,U>& other) : super_t(other.const_get()) {}
+    
+    tuple_leaf& operator=(const tuple_leaf&) = default;
+
+    tuple_leaf& operator=(tuple_leaf&&) = default;
 
     // converting move-constructor
     // note the use of std::forward<U> here to allow construction of T from U&&
@@ -290,22 +448,6 @@ class tuple_leaf : public tuple_leaf_base<T>
     tuple_leaf& operator=(const tuple_leaf<I,U>& other)
     {
       this->mutable_get() = other.const_get();
-      return *this;
-    }
-    
-    TUPLE_EXEC_CHECK_DISABLE
-    TUPLE_ANNOTATION
-    tuple_leaf& operator=(const tuple_leaf& other)
-    {
-      this->mutable_get() = other.const_get();
-      return *this;
-    }
-
-    TUPLE_EXEC_CHECK_DISABLE
-    TUPLE_ANNOTATION
-    tuple_leaf& operator=(tuple_leaf&& other)
-    {
-      this->mutable_get() = std::forward<T>(other.mutable_get());
       return *this;
     }
 
@@ -364,6 +506,11 @@ class tuple_base<tuple_index_sequence<I...>, Types...>
 
     tuple_base() = default;
 
+    tuple_base(const tuple_base&) = default;
+
+    tuple_base(tuple_base&&) = default;
+
+
     TUPLE_ANNOTATION
     tuple_base(const Types&... args)
       : tuple_leaf<I,Types>(args)...
@@ -380,18 +527,6 @@ class tuple_base<tuple_index_sequence<I...>, Types...>
     TUPLE_ANNOTATION
     explicit tuple_base(UTypes&&... args)
       : tuple_leaf<I,Types>(std::forward<UTypes>(args))...
-    {}
-
-
-    TUPLE_ANNOTATION
-    tuple_base(const tuple_base& other)
-      : tuple_leaf<I,Types>(other.template const_leaf<I>())...
-    {}
-
-
-    TUPLE_ANNOTATION
-    tuple_base(tuple_base&& other)
-      : tuple_leaf<I,Types>(std::move(other.template mutable_leaf<I>()))...
     {}
 
 
@@ -434,19 +569,10 @@ class tuple_base<tuple_index_sequence<I...>, Types...>
     //{}
 
 
-    TUPLE_ANNOTATION
-    tuple_base& operator=(const tuple_base& other)
-    {
-      swallow((mutable_leaf<I>() = other.template const_leaf<I>())...);
-      return *this;
-    }
+    tuple_base& operator=(const tuple_base&) = default;
 
-    TUPLE_ANNOTATION
-    tuple_base& operator=(tuple_base&& other)
-    {
-      swallow((mutable_leaf<I>() = std::move(other.template mutable_leaf<I>()))...);
-      return *this;
-    }
+    tuple_base& operator=(tuple_base&&) = default;
+
 
     template<class... UTypes,
              class = typename std::enable_if<
@@ -605,31 +731,33 @@ typename std::tuple_element<i, TUPLE_NAMESPACE::tuple<UTypes...>>::type &&
 
 
 template<class... Types>
-class tuple
+class tuple : private TUPLE_DETAIL_NAMESPACE::tuple_base<TUPLE_DETAIL_NAMESPACE::tuple_make_index_sequence<sizeof...(Types)>, Types...>
 {
   private:
     using base_type = TUPLE_DETAIL_NAMESPACE::tuple_base<TUPLE_DETAIL_NAMESPACE::tuple_make_index_sequence<sizeof...(Types)>, Types...>;
-    base_type base_;
 
     TUPLE_ANNOTATION
     base_type& base()
     {
-      return base_;
+      return *this;
     }
 
     TUPLE_ANNOTATION
     const base_type& base() const
     {
-      return base_;
+      return *this;
     }
 
   public:
-    TUPLE_ANNOTATION
-    tuple() : base_{} {};
+    tuple() = default;
+
+    tuple(const tuple&) = default;
+
+    tuple(tuple&&) = default;
 
     TUPLE_ANNOTATION
     explicit tuple(const Types&... args)
-      : base_{args...}
+      : base_type{args...}
     {}
 
     template<class... UTypes,
@@ -641,7 +769,7 @@ class tuple
              >::type>
     TUPLE_ANNOTATION
     explicit tuple(UTypes&&... args)
-      : base_{std::forward<UTypes>(args)...}
+      : base_type{std::forward<UTypes>(args)...}
     {}
 
     template<class... UTypes,
@@ -653,7 +781,7 @@ class tuple
              >::type>
     TUPLE_ANNOTATION
     tuple(const tuple<UTypes...>& other)
-      : base_{other.base()}
+      : base_type{other.base()}
     {}
 
     template<class... UTypes,
@@ -665,7 +793,7 @@ class tuple
              >::type>
     TUPLE_ANNOTATION
     tuple(tuple<UTypes...>&& other)
-      : base_{std::move(other.base())}
+      : base_type{std::move(other.base())}
     {}
 
     template<class UType1, class UType2,
@@ -678,7 +806,7 @@ class tuple
              >::type>
     TUPLE_ANNOTATION
     tuple(const std::pair<UType1,UType2>& p)
-      : base_{p.first, p.second}
+      : base_type{p.first, p.second}
     {}
 
     template<class UType1, class UType2,
@@ -691,17 +819,7 @@ class tuple
              >::type>
     TUPLE_ANNOTATION
     tuple(std::pair<UType1,UType2>&& p)
-      : base_{std::move(p.first), std::move(p.second)}
-    {}
-
-    TUPLE_ANNOTATION
-    tuple(const tuple& other)
-      : base_{other.base()}
-    {}
-
-    TUPLE_ANNOTATION
-    tuple(tuple&& other)
-      : base_{std::move(other.base())}
+      : base_type{std::move(p.first), std::move(p.second)}
     {}
 
     //template<class... UTypes,
@@ -713,22 +831,12 @@ class tuple
     //         >::type>
     //TUPLE_ANNOTATION
     //tuple(const std::tuple<UTypes...>& other)
-    //  : base_{other}
+    //  : base_type{other}
     //{}
 
-    TUPLE_ANNOTATION
-    tuple& operator=(const tuple& other)
-    {
-      base().operator=(other.base());
-      return *this;
-    }
+    tuple& operator=(const tuple&) = default;
 
-    TUPLE_ANNOTATION
-    tuple& operator=(tuple&& other)
-    {
-      base().operator=(std::move(other.base()));
-      return *this;
-    }
+    tuple& operator=(tuple&&) = default;
 
     // XXX needs enable_if
     template<class... UTypes>
