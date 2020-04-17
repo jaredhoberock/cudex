@@ -51,7 +51,7 @@ using is_bindable = disjunction<
 
 
 template<class Invocable, class... Args>
-class bind_result 
+class closure 
 {
   private:
     using tuple_type = tuple<Args...>;
@@ -62,13 +62,13 @@ class bind_result
              CUDEX_REQUIRES(std::is_constructible<tuple_type, OtherArgs&&...>::value)
             >
     CUDEX_ANNOTATION
-    bind_result(OtherInvocable&& f, OtherArgs&&... args)
+    closure(OtherInvocable&& f, OtherArgs&&... args)
       : f_(std::forward<OtherInvocable>(f)),
         args_(std::forward<OtherArgs>(args)...)
     {}
 
 
-    bind_result(const bind_result&) = default;
+    closure(const closure&) = default;
 
     
     // indirect use of Invocable via a defaulted parameter enables SFINAE in CUDEX_REQUIRES
@@ -108,7 +108,7 @@ template<class Invocable, class... Args,
          CUDEX_REQUIRES(is_bindable<decay_t<Invocable>, decay_t<Args>...>::value)
         >
 CUDEX_ANNOTATION
-bind_result<decay_t<Invocable>, decay_t<Args>...>
+closure<decay_t<Invocable>, decay_t<Args>...>
   bind(Invocable&& f, Args&&... args)
 {
   return {std::forward<Invocable>(f), std::forward<Args>(args)...};

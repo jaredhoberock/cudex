@@ -31,7 +31,7 @@
 #include <type_traits>
 #include <utility>
 #include "../../execution.hpp"
-#include "../../functional/bind.hpp"
+#include "../../functional/closure.hpp"
 
 
 CUDEX_NAMESPACE_OPEN_BRACE
