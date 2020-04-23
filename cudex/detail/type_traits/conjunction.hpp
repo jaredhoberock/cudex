@@ -26,18 +26,29 @@
 
 #pragma once
 
-#include "prologue.hpp"
+#include "../prologue.hpp"
 
-#include "type_traits/decay.hpp"
-#include "type_traits/conjunction.hpp"
-#include "type_traits/disjunction.hpp"
-#include "type_traits/has_then.hpp"
-#include "type_traits/invoke_result.hpp"
-#include "type_traits/is_detected.hpp"
-#include "type_traits/is_invocable.hpp"
-#include "type_traits/is_nothrow_invocable.hpp"
-#include "type_traits/is_nothrow_receiver_of.hpp"
-#include "type_traits/remove_cvref.hpp"
+#include <type_traits> 
 
-#include "epilogue.hpp"
+
+CUDEX_NAMESPACE_OPEN_BRACE
+
+
+namespace detail
+{
+
+
+template<class...> struct conjunction;
+template<> struct conjunction<> : std::true_type {};
+template<class B1> struct conjunction<B1> : B1 {};
+template<class B1, class... BN> struct conjunction<B1,BN...> : std::conditional<bool(B1::value), conjunction<BN...>, B1>::type {};
+
+
+} // end detail
+
+
+CUDEX_NAMESPACE_CLOSE_BRACE
+
+
+#include "../epilogue.hpp"
 
