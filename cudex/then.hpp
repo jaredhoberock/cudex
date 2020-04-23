@@ -75,6 +75,10 @@ const __device__ detail::then_customization_point then;
 } // end anonymous namespace
 
 
+template<class S, class F>
+using then_t = decltype(CUDEX_NAMESPACE::then(std::declval<S>(), std::declval<F>()));
+
+
 CUDEX_NAMESPACE_CLOSE_BRACE
 
 

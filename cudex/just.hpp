@@ -44,6 +44,10 @@ auto just(T&& value)
 }
 
 
+template<class T>
+using just_t = decltype(CUDEX_NAMESPACE::just(std::declval<T>()));
+
+
 CUDEX_NAMESPACE_CLOSE_BRACE
 
 

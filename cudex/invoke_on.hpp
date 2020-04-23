@@ -75,6 +75,10 @@ const __device__ detail::invoke_on_customization_point invoke_on;
 } // end anonymous namespace
 
 
+template<class E, class F, class... Args>
+using invoke_on_t = decltype(CUDEX_NAMESPACE::invoke_on(std::declval<E>(), std::declval<F>(), std::declval<Args>()...));
+
+
 CUDEX_NAMESPACE_CLOSE_BRACE
 
 

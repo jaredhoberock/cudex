@@ -75,6 +75,10 @@ const __device__ detail::on_customization_point on;
 } // end anonymous namespace
 
 
+template<class S, class E>
+using on_t = decltype(CUDEX_NAMESPACE::on(std::declval<S>(), std::declval<E>()));
+
+
 CUDEX_NAMESPACE_CLOSE_BRACE
 
 

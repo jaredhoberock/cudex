@@ -75,6 +75,10 @@ const __device__ detail::just_on_customization_point just_on;
 } // end anonymous namespace
 
 
+template<class E, class T>
+using just_on_t = decltype(CUDEX_NAMESPACE::just_on(std::declval<E>(), std::declval<T>()));
+
+
 CUDEX_NAMESPACE_CLOSE_BRACE
 
 
