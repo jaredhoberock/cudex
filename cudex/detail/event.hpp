@@ -42,13 +42,20 @@ namespace detail
 
 
 // this is an RAII type for cudaEvent_t
+// it always refers to a valid cudaEvent_t resource.
+// i.e., native_handle() is never equal to cudaEvent_t{}
 class event
 {
   public:
+    CUDEX_ANNOTATION
+    inline event()
+      : native_handle_{make_event()}
+    {}
+
     // this ctor isn't explicit to make it easy to construct a vector of these from a range of streams
     CUDEX_ANNOTATION
     inline event(cudaStream_t s)
-      : native_handle_(make_event())
+      : event{}
     {
       record_on(s);
     }
@@ -59,16 +66,10 @@ class event
     {}
 
     CUDEX_ANNOTATION
-    inline event()
-      : native_handle_{}
-    {}
-
-    CUDEX_ANNOTATION
     event(event&& other)
-      : native_handle_{}
+      : event{}
     {
-      native_handle_ = other.native_handle_;
-      other.native_handle_ = {};
+      swap(other);
     }
 
     event(const event&) = delete;
@@ -76,22 +77,17 @@ class event
     CUDEX_ANNOTATION
     inline ~event() noexcept
     {
-      if(native_handle_)
-      {
 #if CUDEX_HAS_CUDART
-        detail::throw_on_error(cudaEventDestroy(native_handle()), "detail::event::~event: CUDA error after cudaEventDestroy");
+      detail::throw_on_error(cudaEventDestroy(native_handle()), "detail::event::~event: CUDA error after cudaEventDestroy");
 #else
-        detail::terminate_with_message("detail::event::~event: cudaEventDestroy is unavailable.");
+      detail::terminate_with_message("detail::event::~event: cudaEventDestroy is unavailable.");
 #endif
-      }
     }
 
     CUDEX_ANNOTATION
     event& operator=(event&& other)
     {
-      cudaEvent_t tmp = native_handle_;
-      native_handle_ = other.native_handle_;
-      other.native_handle_ = tmp;
+      swap(other);
       return *this;
     }
 
@@ -104,11 +100,6 @@ class event
     CUDEX_ANNOTATION
     void record_on(cudaStream_t s)
     {
-      if(!native_handle())
-      {
-        native_handle_ = make_event();
-      }
-
 #if (__CUDA_ARCH__ == 0) or CUDEX_HAS_CUDART
       detail::throw_on_error(cudaEventRecord(native_handle(), s), "detail::event::record_on: CUDA error after cudaEventRecord");
 #else
@@ -118,10 +109,15 @@ class event
 
     void wait() const
     {
-      if(native_handle())
-      {
-        detail::throw_on_error(cudaEventSynchronize(native_handle()), "detail::event::wait: CUDA error after cudaEventSynchronize");
-      }
+      detail::throw_on_error(cudaEventSynchronize(native_handle()), "detail::event::wait: CUDA error after cudaEventSynchronize");
+    }
+
+    CUDEX_ANNOTATION
+    void swap(event& other)
+    {
+      cudaEvent_t tmp = native_handle_;
+      native_handle_ = other.native_handle_;
+      other.native_handle_ = tmp;
     }
 
   private:
