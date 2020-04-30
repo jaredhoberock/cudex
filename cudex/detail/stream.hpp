@@ -92,6 +92,12 @@ class stream_view
       detail::throw_on_error(cudaStreamSynchronize(native_handle_), "detail::stream_view::synchronize: CUDA error after cudaStreamSynchronize");
     }
 
+    CUDEX_ANNOTATION
+    inline void wait_for(cudaEvent_t e) const
+    {
+      detail::throw_on_error(cudaStreamWaitEvent(native_handle_, e, 0), "deteail::stream_view::wait_for: CUDA error after cudaStreamWaitEvent");
+    }
+
   private:
     int device_;
     cudaStream_t native_handle_;
@@ -99,21 +105,23 @@ class stream_view
 
 
 // this is an RAII type for cudaStream_t
-class stream
+// XXX this should just inherit from stream_view and expose its members
+class stream : public stream_view
 {
   public:
     // this ctor isn't explicit to make it easy to construct a vector of these from a range of integers
     CUDEX_ANNOTATION
     inline stream(int device = 0)
-      : stream_view_(make_stream(device))
+      : stream_view{make_stream(device)}
     {}
 
     stream(const stream&) = delete;
 
-    inline stream(stream&& other)
-      : stream_view_{}
+    CUDEX_ANNOTATION
+    stream(stream&& other)
+      : stream_view{other}
     {
-      std::swap(stream_view_, other.stream_view_);
+      static_cast<stream_view&>(other) = stream_view{};
     }
 
     CUDEX_ANNOTATION
@@ -121,26 +129,14 @@ class stream
     {
       if(native_handle() != 0)
       {
-        detail::throw_on_error(cudaStreamDestroy(native_handle()), "static_stream_pool::stream::~stream: CUDA error after cudaStreamDestroy");
+        detail::throw_on_error(cudaStreamDestroy(native_handle()), "stream::~stream: CUDA error after cudaStreamDestroy");
       }
-    }
-
-    CUDEX_ANNOTATION
-    inline cudaStream_t native_handle() const
-    {
-      return stream_view_.native_handle();
-    }
-
-    CUDEX_ANNOTATION
-    inline int device() const
-    {
-      return stream_view_.device();
     }
 
     CUDEX_ANNOTATION
     inline stream_view view() const
     {
-      return stream_view_;
+      return *this;
     }
 
   private:
@@ -156,8 +152,6 @@ class stream
 
       return {device, result};
     }
-
-    stream_view stream_view_;
 };
 
 
