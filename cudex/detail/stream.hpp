@@ -95,7 +95,11 @@ class stream_view
     CUDEX_ANNOTATION
     inline void wait_for(cudaEvent_t e) const
     {
+#if CUDEX_HAS_CUDART
       detail::throw_on_error(cudaStreamWaitEvent(native_handle_, e, 0), "deteail::stream_view::wait_for: CUDA error after cudaStreamWaitEvent");
+#else
+      detail::throw_on_error(cudaErrorNotSupported, "detail::stream_view::wait_for: cudaStreamWaitEvent requires CUDA Runtime");
+#endif
     }
 
   private:
