@@ -107,9 +107,39 @@ class event
 #endif
     }
 
+    CUDEX_ANNOTATION
+    bool is_ready() const
+    {
+      bool result = false;
+
+#if (__CUDA_ARCH__ == 0) or CUDEX_HAS_CUDART
+      cudaError_t status = cudaEventQuery(native_handle());
+
+      if(status != cudaErrorNotReady and status != cudaSuccess)
+      {
+        detail::throw_on_error(status, "detail::event::is_ready: CUDA error after cudaEventQuery");
+      }
+
+      result = (status == cudaSuccess);
+#else
+      detail::throw_runtime_error("detail::event::record_on: cudaEventRecord is unavailable.");
+#endif
+
+      return result;
+    }
+
+    CUDEX_ANNOTATION
     void wait() const
     {
+#if CUDEX_HAS_CUDART
+#  ifndef __CUDA_ARCH__
       detail::throw_on_error(cudaEventSynchronize(native_handle()), "detail::event::wait: CUDA error after cudaEventSynchronize");
+#  else
+      detail::throw_on_error(cudaDeviceSynchronize(), "detail::event::wait: CUDA error after cudaDeviceSynchronize");
+#  endif
+#else
+      detail::throw_runtime_error("detail::event::wait: Unsupported operation.");
+#endif
     }
 
     CUDEX_ANNOTATION
