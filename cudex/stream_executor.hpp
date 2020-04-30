@@ -82,6 +82,12 @@ class stream_executor
     }
 
     CUDEX_ANNOTATION
+    void stream_wait_for(cudaEvent_t e) const
+    {
+      stream_.wait_for(e);
+    }
+
+    CUDEX_ANNOTATION
     int device() const
     {
       return stream_.device();
