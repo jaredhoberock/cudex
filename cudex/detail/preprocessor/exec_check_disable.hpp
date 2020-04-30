@@ -5,7 +5,7 @@
 // a compatible execution space
 
 #ifndef CUDEX_EXEC_CHECK_DISABLE
-#  ifdef __CUDACC__
+#  if defined(__CUDACC__) and !defined(__NVCOMPILER_CUDA__)
 #    define CUDEX_EXEC_CHECK_DISABLE #pragma nv_exec_check_disable
 #  else
 #    define CUDEX_EXEC_CHECK_DISABLE

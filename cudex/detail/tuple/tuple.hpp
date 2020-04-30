@@ -41,7 +41,7 @@
 
 
 // define the incantation to silence nvcc errors concerning __host__ __device__ functions
-#if defined(__CUDACC__) && !(defined(__CUDA__) && defined(__clang__))
+#if defined(__CUDACC__) && !(defined(__CUDA__) && defined(__clang__)) and !defined(__NVCOMPILER_CUDA__)
 #  define TUPLE_EXEC_CHECK_DISABLE \
 #  pragma nv_exec_check_disable
 #else
