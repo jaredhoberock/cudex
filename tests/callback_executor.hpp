@@ -34,7 +34,7 @@ void test(cudaStream_t s)
 
 void test_on_default_stream()
 {
-  test(cudaStream_t{}, 0);
+  test(cudaStream_t{});
 }
 
 
@@ -43,7 +43,7 @@ void test_on_new_stream()
   cudaStream_t s{};
   assert(cudaStreamCreateWithFlags(&s, cudaStreamNonBlocking) == cudaSuccess);
 
-  test(s, 0);
+  test(s);
 
   assert(cudaStreamDestroy(s) == cudaSuccess);
 }
