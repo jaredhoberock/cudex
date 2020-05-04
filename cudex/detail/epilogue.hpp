@@ -19,3 +19,10 @@
 
 #endif
 
+
+// allow importers of this library to provide a special header to
+// be included after the epilogue
+#if __has_include("afterword.hpp")
+#include "afterword.hpp"
+#endif
+
