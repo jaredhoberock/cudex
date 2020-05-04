@@ -26,12 +26,30 @@
 
 #pragma once
 
-#include "detail/prologue.hpp"
+#include "../detail/prologue.hpp"
 
-#include "executor/bulk_execute.hpp"
-#include "executor/execute.hpp"
-#include "executor/is_executor.hpp"
-#include "executor/is_executor_of.hpp"
+#include <type_traits>
+#include "../detail/type_traits/conjunction.hpp"
+#include "../detail/type_traits/is_detected.hpp"
+#include "../detail/type_traits/is_equality_comparable.hpp"
+#include "../detail/type_traits/is_invocable.hpp"
+#include "execute.hpp"
 
-#include "detail/epilogue.hpp"
+
+CUDEX_NAMESPACE_OPEN_BRACE
+
+
+template<class E, class F>
+using is_executor_of = detail::conjunction<
+  detail::is_invocable<F>,
+  std::is_nothrow_copy_constructible<E>,
+  std::is_nothrow_destructible<E>,
+  detail::is_equality_comparable<E>,
+  detail::is_detected<execute_t, E, F>
+>;
+
+
+CUDEX_NAMESPACE_CLOSE_BRACE
+
+#include "../detail/epilogue.hpp"
 

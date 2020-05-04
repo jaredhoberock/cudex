@@ -26,12 +26,34 @@
 
 #pragma once
 
-#include "detail/prologue.hpp"
+#include "../detail/prologue.hpp"
 
-#include "executor/bulk_execute.hpp"
-#include "executor/execute.hpp"
-#include "executor/is_executor.hpp"
-#include "executor/is_executor_of.hpp"
+#include "is_executor_of.hpp"
 
-#include "detail/epilogue.hpp"
+
+CUDEX_NAMESPACE_OPEN_BRACE
+
+
+namespace detail
+{
+
+
+struct invocable_archetype
+{
+  template<class... Args>
+  CUDEX_ANNOTATION
+  void operator()(Args&&...) const;
+};
+
+
+} // end detail
+
+
+template<class E>
+using is_executor = is_executor_of<E, detail::invocable_archetype>;
+
+
+CUDEX_NAMESPACE_CLOSE_BRACE
+
+#include "../detail/epilogue.hpp"
 
