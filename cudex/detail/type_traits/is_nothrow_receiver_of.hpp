@@ -53,4 +53,3 @@ CUDEX_NAMESPACE_CLOSE_BRACE
 
 #include "../epilogue.hpp"
 
-
