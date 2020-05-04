@@ -28,6 +28,7 @@
 
 #include "detail/prologue.hpp"
 
+#include "executor/bulk_execute.hpp"
 #include "executor/execute.hpp"
 
 #include "detail/epilogue.hpp"
