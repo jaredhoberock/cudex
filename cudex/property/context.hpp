@@ -26,11 +26,34 @@
 
 #pragma once
 
-#include "detail/prologue.hpp"
+#include "../prologue.hpp"
 
-#include "property/allocator.hpp"
-#include "property/bulk_guarantee.hpp"
-#include "property/context.hpp"
+#if __has_include(<any>)
+#include <any>
+#endif
 
-#include "detail/epilogue.hpp"
+#include "detail/basic_executor_property.hpp"
+
+
+CUDEX_NAMESPACE_OPEN_BRACE
+
+
+struct context_t : 
+  detail::basic_executor_property<
+    context_t,
+    false,
+    false
+#if __cpp_lib_any
+    , std::any
+#endif
+>
+{};
+
+
+static constexpr context_t context{};
+
+
+CUDEX_NAMESPACE_CLOSE_BRACE
+
+#include "../detail/epilogue.hpp"
 
