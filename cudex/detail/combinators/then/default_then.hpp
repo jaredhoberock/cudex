@@ -29,7 +29,6 @@
 #include "../../prologue.hpp"
 
 #include <utility>
-#include "../../../discard_receiver.hpp"
 #include "../../execution.hpp"
 #include "../../functional/invoke.hpp"
 #include "../../type_traits/decay.hpp"
@@ -43,6 +42,21 @@ CUDEX_NAMESPACE_OPEN_BRACE
 
 namespace detail
 {
+
+
+struct discard_receiver
+{
+  template<class... Args>
+  CUDEX_ANNOTATION
+  void set_value(Args&&...) && noexcept {}
+
+  template<class E>
+  CUDEX_ANNOTATION
+  void set_error(E&&) && noexcept {}
+
+  CUDEX_ANNOTATION
+  void set_done() && noexcept {}
+};
 
 
 template<class Receiver, class Function>
