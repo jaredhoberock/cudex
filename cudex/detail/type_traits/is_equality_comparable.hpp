@@ -26,19 +26,31 @@
 
 #pragma once
 
-#include "prologue.hpp"
+#include "../prologue.hpp"
 
-#include "type_traits/conjunction.hpp"
-#include "type_traits/decay.hpp"
-#include "type_traits/disjunction.hpp"
-#include "type_traits/has_then.hpp"
-#include "type_traits/invoke_result.hpp"
-#include "type_traits/is_detected.hpp"
-#include "type_traits/is_equality_comparable.hpp"
-#include "type_traits/is_invocable.hpp"
-#include "type_traits/is_nothrow_invocable.hpp"
-#include "type_traits/is_nothrow_receiver_of.hpp"
-#include "type_traits/remove_cvref.hpp"
+#include <utility>
 
-#include "epilogue.hpp"
+
+CUDEX_NAMESPACE_OPEN_BRACE
+
+
+namespace detail
+{
+
+
+template<class L, class R>
+using operator_equal_t = decltype(std::declval<L>() == std::declval<R>());
+
+
+template<class T>
+using is_equality_comparable = is_detected<operator_equal_t, T, T>;
+
+
+} // end detail
+
+
+CUDEX_NAMESPACE_CLOSE_BRACE
+
+
+#include "../epilogue.hpp"
 
