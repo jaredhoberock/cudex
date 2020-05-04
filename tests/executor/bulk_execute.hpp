@@ -65,9 +65,9 @@ struct has_execute_member_function_and_static_unsequenced_guarantee
   }
 
   __host__ __device__
-  constexpr static cudex::detail::execution::bulk_guarantee_t::unsequenced_t query(cudex::detail::execution::bulk_guarantee_t)
+  constexpr static cudex::bulk_guarantee_t::unsequenced_t query(cudex::bulk_guarantee_t)
   {
-    return cudex::detail::execution::bulk_guarantee.unsequenced;
+    return cudex::bulk_guarantee.unsequenced;
   }
 };
 
@@ -201,6 +201,7 @@ void test(const Executor& e)
 }
 
 
+__host__ __device__
 void test()
 {
   test(has_bulk_execute_member_function{});
