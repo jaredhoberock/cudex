@@ -46,21 +46,37 @@ class chaining_sender
     Sender sender_;
 
   public:
+    CUDEX_EXEC_CHECK_DISABLE
     template<class OtherSender,
              CUDEX_REQUIRES(detail::execution::is_sender<OtherSender&&>::value),
              CUDEX_REQUIRES(std::is_constructible<Sender,OtherSender&&>::value)
             >
     CUDEX_ANNOTATION
     chaining_sender(OtherSender&& sender)
-      : sender_(std::forward<OtherSender>(sender))
+      : sender_{std::forward<OtherSender>(sender)}
     {}
 
-    chaining_sender(const chaining_sender&) = default;
+    CUDEX_EXEC_CHECK_DISABLE
+    CUDEX_ANNOTATION
+    chaining_sender(const chaining_sender& other)
+      : sender_{other.sender_}
+    {}
 
-    chaining_sender(chaining_sender&&) = default;
+    CUDEX_EXEC_CHECK_DISABLE
+    CUDEX_ANNOTATION
+    chaining_sender(chaining_sender&& other)
+      : sender_{std::move(other.sender_)}
+    {}
 
 
-    template<class Receiver>
+    CUDEX_EXEC_CHECK_DISABLE
+    CUDEX_ANNOTATION
+    ~chaining_sender() {}
+
+
+    template<class Receiver,
+             CUDEX_REQUIRES(detail::execution::is_sender_to<Sender&&,Receiver&&>::value)
+            >
     CUDEX_ANNOTATION
     auto connect(Receiver&& receiver) &&
       -> decltype(detail::execution::connect(std::move(sender_), std::forward<Receiver>(receiver)))

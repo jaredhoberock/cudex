@@ -29,6 +29,7 @@
 #include "../../prologue.hpp"
 
 #include <utility>
+#include "../../../discard_receiver.hpp"
 #include "../../execution.hpp"
 #include "../../functional/invoke.hpp"
 #include "../../type_traits/decay.hpp"
@@ -72,7 +73,7 @@ class then_receiver
 
 
     // Function returns void case
-    template<class... Args, class Result = invoke_result_t<Function, Args...>,
+    template<class... Args, class Result = invoke_result_t<Function, Args&&...>,
              CUDEX_REQUIRES(std::is_void<Result>::value),
              CUDEX_REQUIRES(execution::is_receiver_of<Receiver, Result>::value)
             >
@@ -84,7 +85,7 @@ class then_receiver
     }
 
     // Function returns non-void case
-    template<class... Args, class Result = invoke_result_t<Function, Args...>,
+    template<class... Args, class Result = invoke_result_t<Function, Args&&...>,
              CUDEX_REQUIRES(!std::is_void<Result>::value),
              CUDEX_REQUIRES(execution::is_receiver_of<Receiver, Result>::value)
             >
@@ -132,20 +133,28 @@ class then_sender : public execution::sender_base
     Function continuation_;
 
   public:
+    CUDEX_EXEC_CHECK_DISABLE
     template<class OtherSender, class OtherFunction,
              CUDEX_REQUIRES(std::is_constructible<Sender,OtherSender&&>::value),
              CUDEX_REQUIRES(std::is_constructible<Function,OtherFunction&&>::value)
             >
     CUDEX_ANNOTATION
     then_sender(OtherSender&& predecessor, OtherFunction&& continuation)
-      : predecessor_(std::forward<OtherSender>(predecessor)), continuation_(std::forward<OtherFunction>(continuation))
+      : predecessor_{std::forward<OtherSender>(predecessor)},
+        continuation_{std::forward<OtherFunction>(continuation)}
     {}
 
+    CUDEX_EXEC_CHECK_DISABLE
     then_sender(const then_sender&) = default;
 
+    CUDEX_EXEC_CHECK_DISABLE
     then_sender(then_sender&&) = default;
 
+    CUDEX_EXEC_CHECK_DISABLE
+    ~then_sender() = default;
+
     template<class Receiver,
+             CUDEX_REQUIRES(execution::is_receiver<Receiver>::value),
              CUDEX_REQUIRES(execution::is_sender_to<Sender, then_receiver<Receiver, Function>>::value)
             >
     CUDEX_ANNOTATION
@@ -158,6 +167,7 @@ class then_sender : public execution::sender_base
     // this overload allows makes then_sender a "multi-shot" sender when both the predecessor and continuation are copyable
     // XXX should introduce is_multishot_sender or something
     template<class Receiver,
+             CUDEX_REQUIRES(execution::is_receiver<Receiver>::value),
              CUDEX_REQUIRES(execution::is_sender_to<Sender, then_receiver<Receiver, Function>>::value)
             >
     CUDEX_ANNOTATION
@@ -169,7 +179,9 @@ class then_sender : public execution::sender_base
 };
 
 
-template<class Sender, class Function>
+template<class Sender, class Function,
+         CUDEX_REQUIRES(execution::is_sender_to<Sender, then_receiver<discard_receiver, Function>>::value)
+        >
 CUDEX_ANNOTATION
 detail::then_sender<detail::decay_t<Sender>, detail::decay_t<Function>>
   default_then(Sender&& predecessor, Function&& continuation)

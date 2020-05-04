@@ -73,8 +73,12 @@ class invoke_sender : public execution::sender_base
     >;
 
 
+    //template<class Receiver,
+    //         CUDEX_REQUIRES(execution::is_receiver_of<Receiver, invoke_result_t<Invocable>>::value)
+    //        >
     template<class Receiver,
-             CUDEX_REQUIRES(execution::is_receiver_of<Receiver, invoke_result_t<Invocable>>::value)
+             class Result = invoke_result_t<Invocable>,
+             CUDEX_REQUIRES(execution::is_receiver_of<Receiver, Result>::value)
             >
     CUDEX_ANNOTATION
     operation<Receiver&&> connect(Receiver&& r) &&
