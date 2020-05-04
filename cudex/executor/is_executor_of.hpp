@@ -26,19 +26,30 @@
 
 #pragma once
 
-#include "prologue.hpp"
+#include "../detail/prologue.hpp"
 
-#include "type_traits/conjunction.hpp"
-#include "type_traits/decay.hpp"
-#include "type_traits/disjunction.hpp"
-#include "type_traits/has_then.hpp"
-#include "type_traits/invoke_result.hpp"
-#include "type_traits/is_detected.hpp"
-#include "type_traits/is_equality_comparable.hpp"
-#include "type_traits/is_invocable.hpp"
-#include "type_traits/is_nothrow_invocable.hpp"
-#include "type_traits/is_nothrow_receiver_of.hpp"
-#include "type_traits/remove_cvref.hpp"
+#include <type_traits>
+#include "../detail/type_traits/conjunction.hpp"
+#include "../detail/type_traits/is_detected.hpp"
+#include "../detail/type_traits/is_equality_comparable.hpp"
+#include "../detail/type_traits/is_invocable.hpp"
+#include "execute.hpp"
 
-#include "epilogue.hpp"
+
+CUDEX_NAMESPACE_OPEN_BRACE
+
+
+template<class E, class F>
+using is_executor_of = detail::conjunction<
+  detail::is_invocable<F>,
+  std::is_nothrow_copy_constructible<E>,
+  std::is_nothrow_destructible<E>,
+  detail::is_equality_comparable<E>,
+  detail::is_detected<execute_t, E, F>
+>;
+
+
+CUDEX_NAMESPACE_CLOSE_BRACE
+
+#include "../detail/epilogue.hpp"
 

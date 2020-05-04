@@ -58,3 +58,5 @@ using has_then_free_function = is_detected<then_free_function_t, S, F>;
 
 CUDEX_NAMESPACE_CLOSE_BRACE
 
+#include "../epilogue.hpp"
+

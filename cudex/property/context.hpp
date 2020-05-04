@@ -26,45 +26,34 @@
 
 #pragma once
 
-#include "detail/prologue.hpp"
+#include "../detail/prologue.hpp"
 
-#include <utility>
-#include "detail/execution.hpp"
-#include "detail/functional/invoke.hpp"
-#include "detail/type_traits.hpp"
+#if __has_include(<any>)
+#include <any>
+#endif
+
+#include "detail/basic_executor_property.hpp"
+
 
 CUDEX_NAMESPACE_OPEN_BRACE
 
 
-struct inline_executor
-{
-  template<class Function,
-           CUDEX_REQUIRES(detail::is_invocable<Function&&>::value)
-          >
-  CUDEX_ANNOTATION
-  void execute(Function&& f) const noexcept
-  {
-    detail::invoke(std::forward<Function>(f));
-  }
-
-  CUDEX_ANNOTATION
-  constexpr bool operator==(const inline_executor&) const noexcept
-  {
-    return true;
-  }
-
-  CUDEX_ANNOTATION
-  constexpr bool operator!=(const inline_executor&) const noexcept
-  {
-    return false;
-  }
-};
+struct context_t : 
+  detail::basic_executor_property<
+    context_t,
+    false,
+    false
+#if __cpp_lib_any
+    , std::any
+#endif
+>
+{};
 
 
-static_assert(detail::execution::is_executor<inline_executor>::value, "Error.");
+static constexpr context_t context{};
 
 
 CUDEX_NAMESPACE_CLOSE_BRACE
 
-#include "detail/epilogue.hpp"
+#include "../detail/epilogue.hpp"
 

@@ -26,19 +26,45 @@
 
 #pragma once
 
-#include "prologue.hpp"
+#include "../detail/prologue.hpp"
 
-#include "type_traits/conjunction.hpp"
-#include "type_traits/decay.hpp"
-#include "type_traits/disjunction.hpp"
-#include "type_traits/has_then.hpp"
-#include "type_traits/invoke_result.hpp"
-#include "type_traits/is_detected.hpp"
-#include "type_traits/is_equality_comparable.hpp"
-#include "type_traits/is_invocable.hpp"
-#include "type_traits/is_nothrow_invocable.hpp"
-#include "type_traits/is_nothrow_receiver_of.hpp"
-#include "type_traits/remove_cvref.hpp"
+#include <utility>
+#include "../detail/functional/invoke.hpp"
+#include "../detail/type_traits.hpp"
+#include "is_executor.hpp"
 
-#include "epilogue.hpp"
+CUDEX_NAMESPACE_OPEN_BRACE
+
+
+struct inline_executor
+{
+  template<class Function,
+           CUDEX_REQUIRES(detail::is_invocable<Function&&>::value)
+          >
+  CUDEX_ANNOTATION
+  void execute(Function&& f) const noexcept
+  {
+    detail::invoke(std::forward<Function>(f));
+  }
+
+  CUDEX_ANNOTATION
+  constexpr bool operator==(const inline_executor&) const noexcept
+  {
+    return true;
+  }
+
+  CUDEX_ANNOTATION
+  constexpr bool operator!=(const inline_executor&) const noexcept
+  {
+    return false;
+  }
+};
+
+
+static_assert(is_executor<inline_executor>::value, "Error.");
+
+
+CUDEX_NAMESPACE_CLOSE_BRACE
+
+#include "../detail/epilogue.hpp"
 

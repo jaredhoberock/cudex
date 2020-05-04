@@ -44,3 +44,5 @@ using decay_t = typename std::decay<T>::type;
 
 CUDEX_NAMESPACE_CLOSE_BRACE
 
+#include "../epilogue.hpp"
+

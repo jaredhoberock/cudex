@@ -24,32 +24,84 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#pragma once
+#include "../detail/prologue.hpp"
 
-#include "../prologue.hpp"
+#include "../detail/launch_kernel.hpp"
+#include "../detail/stream.hpp"
+#include "is_executor.hpp"
 
-#include <type_traits>
-#include <utility>
-#include "../execution.hpp"
 
 CUDEX_NAMESPACE_OPEN_BRACE
 
 
-namespace detail
+class stream_executor
 {
+  public:
+    CUDEX_ANNOTATION
+    inline stream_executor(cudaStream_t stream, int device)
+      : stream_{device, stream}
+    {}
+
+    CUDEX_ANNOTATION
+    inline explicit stream_executor(cudaStream_t stream)
+      : stream_executor(stream, 0)
+    {}
+
+    CUDEX_ANNOTATION
+    inline stream_executor()
+      : stream_executor(cudaStream_t{0})
+    {}
+
+    stream_executor(const stream_executor&) = default;
+
+    template<class Function,
+             CUDEX_REQUIRES(std::is_trivially_copyable<Function>::value)
+            >
+    CUDEX_ANNOTATION
+    void execute(Function f) const noexcept
+    {
+      detail::launch_kernel(f, dim3(1), dim3(1), 0, stream_.native_handle(), stream_.device());
+    }
+
+    CUDEX_ANNOTATION
+    bool operator==(const stream_executor& other) const
+    {
+      return stream_ == other.stream_;
+    }
+
+    CUDEX_ANNOTATION
+    bool operator!=(const stream_executor& other) const
+    {
+      return !(*this == other);
+    }
+
+    CUDEX_ANNOTATION
+    cudaStream_t stream() const
+    {
+      return stream_.native_handle();
+    }
+
+    CUDEX_ANNOTATION
+    void stream_wait_for(cudaEvent_t e) const
+    {
+      stream_.wait_for(e);
+    }
+
+    CUDEX_ANNOTATION
+    int device() const
+    {
+      return stream_.device();
+    }
+
+  private:
+    detail::stream_view stream_;
+};
 
 
-template<class Receiver, class... Args>
-using is_nothrow_receiver_of = std::integral_constant<
-  bool,
-  noexcept(std::declval<Receiver>().set_value(std::declval<Args>()...))
->;
-
-
-} // end detail
+static_assert(is_executor<stream_executor>::value, "Error.");
 
 
 CUDEX_NAMESPACE_CLOSE_BRACE
 
-#include "../epilogue.hpp"
+#include "../detail/epilogue.hpp"
 

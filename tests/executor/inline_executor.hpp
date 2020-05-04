@@ -1,5 +1,5 @@
 #include <cassert>
-#include <cudex/inline_executor.hpp>
+#include <cudex/executor/inline_executor.hpp>
 
 #ifndef __CUDACC__
 #define __host__
