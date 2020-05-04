@@ -29,6 +29,7 @@
 #include "detail/prologue.hpp"
 
 #include "executor/bulk_execute.hpp"
+#include "executor/callback_executor.hpp"
 #include "executor/execute.hpp"
 #include "executor/is_executor.hpp"
 #include "executor/is_executor_of.hpp"

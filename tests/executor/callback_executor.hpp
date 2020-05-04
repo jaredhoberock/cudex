@@ -1,5 +1,5 @@
 #include <cassert>
-#include <cudex/callback_executor.hpp>
+#include <cudex/executor/callback_executor.hpp>
 
 
 int result;
