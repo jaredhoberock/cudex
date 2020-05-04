@@ -26,7 +26,7 @@
 
 #pragma once
 
-#include "../prologue.hpp"
+#include "../detail/prologue.hpp"
 
 #if __has_include(<any>)
 #include <any>
