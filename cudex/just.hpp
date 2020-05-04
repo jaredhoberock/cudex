@@ -28,7 +28,7 @@
 
 #include "detail/prologue.hpp"
 
-#include "inline_executor.hpp"
+#include "executor/inline_executor.hpp"
 #include "just_on.hpp"
 
 

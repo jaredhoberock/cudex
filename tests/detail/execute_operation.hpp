@@ -1,6 +1,6 @@
 #include <cassert>
 #include <cudex/detail/execute_operation.hpp>
-#include <cudex/inline_executor.hpp>
+#include <cudex/executor/inline_executor.hpp>
 
 #ifndef __CUDACC__
 #define __host__

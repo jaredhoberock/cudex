@@ -26,12 +26,12 @@
 
 #pragma once
 
-#include "detail/prologue.hpp"
+#include "../detail/prologue.hpp"
 
 #include <utility>
-#include "detail/execution.hpp"
-#include "detail/functional/invoke.hpp"
-#include "detail/type_traits.hpp"
+#include "../detail/functional/invoke.hpp"
+#include "../detail/type_traits.hpp"
+#include "is_executor.hpp"
 
 CUDEX_NAMESPACE_OPEN_BRACE
 
@@ -61,10 +61,10 @@ struct inline_executor
 };
 
 
-static_assert(detail::execution::is_executor<inline_executor>::value, "Error.");
+static_assert(is_executor<inline_executor>::value, "Error.");
 
 
 CUDEX_NAMESPACE_CLOSE_BRACE
 
-#include "detail/epilogue.hpp"
+#include "../detail/epilogue.hpp"
 

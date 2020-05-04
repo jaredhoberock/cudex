@@ -32,6 +32,7 @@
 #include "executor/execute.hpp"
 #include "executor/is_executor.hpp"
 #include "executor/is_executor_of.hpp"
+#include "executor/inline_executor.hpp"
 
 #include "detail/epilogue.hpp"
 

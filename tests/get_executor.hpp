@@ -1,7 +1,7 @@
 #include <cassert>
 #include <cstring>
+#include <cudex/executor/inline_executor.hpp>
 #include <cudex/get_executor.hpp>
-#include <cudex/inline_executor.hpp>
 #include <exception>
 #include <utility>
 

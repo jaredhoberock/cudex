@@ -1,6 +1,6 @@
 #include <cassert>
 #include <cstring>
-#include <cudex/inline_executor.hpp>
+#include <cudex/executor/inline_executor.hpp>
 #include <cudex/just.hpp>
 #include <exception>
 #include <utility>
