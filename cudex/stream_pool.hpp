@@ -35,7 +35,7 @@
 #include "detail/terminate.hpp"
 #include "detail/throw_on_error.hpp"
 #include "detail/with_current_device.hpp"
-#include "stream_executor.hpp"
+#include "executor/stream_executor.hpp"
 
 
 CUDEX_NAMESPACE_OPEN_BRACE

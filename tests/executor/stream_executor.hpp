@@ -1,5 +1,5 @@
 #include <cassert>
-#include <cudex/stream_executor.hpp>
+#include <cudex/executor/stream_executor.hpp>
 
 
 #ifndef __host__

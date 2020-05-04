@@ -1,4 +1,4 @@
-#include <cudex/stream_executor.hpp>
+#include <cudex/executor.hpp>
 
 #ifdef CUDEX_INCLUDE_LEVEL
 #error CUDEX_INCLUDE_LEVEL defined in client code.

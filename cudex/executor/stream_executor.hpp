@@ -24,11 +24,11 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "detail/prologue.hpp"
+#include "../detail/prologue.hpp"
 
-#include "detail/execution.hpp"
-#include "detail/launch_kernel.hpp"
-#include "detail/stream.hpp"
+#include "../detail/launch_kernel.hpp"
+#include "../detail/stream.hpp"
+#include "is_executor.hpp"
 
 
 CUDEX_NAMESPACE_OPEN_BRACE
@@ -98,10 +98,10 @@ class stream_executor
 };
 
 
-static_assert(detail::execution::is_executor<stream_executor>::value, "Error.");
+static_assert(is_executor<stream_executor>::value, "Error.");
 
 
 CUDEX_NAMESPACE_CLOSE_BRACE
 
-#include "detail/epilogue.hpp"
+#include "../detail/epilogue.hpp"
 
