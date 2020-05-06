@@ -1,12 +1,5 @@
 // note that this header file is special and does not use #pragma once
 
-// allow importers of this library to provide a special header to
-// be included before the prologue
-#if __has_include("foreword.hpp")
-#include "foreword.hpp"
-#endif
-
-
 #ifndef CUDEX_INCLUDE_LEVEL
 
 // the first time this header is #included, this branch is processed
@@ -14,6 +7,12 @@
 // this definition communicates that the stack is empty
 // and that these macros should be undefined by epilogue.hpp
 #define CUDEX_INCLUDE_LEVEL 0
+
+// allow importers of this library to provide a special header to
+// be included before the prologue
+#if __has_include("foreword.hpp")
+#include "foreword.hpp"
+#endif
 
 // include preprocessor headers
 #include "preprocessor.hpp"
