@@ -29,6 +29,7 @@
 #include "../prologue.hpp"
 
 #include <utility>
+#include "is_detected.hpp"
 
 
 CUDEX_NAMESPACE_OPEN_BRACE
