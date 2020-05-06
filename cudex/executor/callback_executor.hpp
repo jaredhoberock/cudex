@@ -84,7 +84,7 @@ class callback_executor
       new(ptr_to_f) self_destructing<T>{std::forward<Function>(f)};
 
       // enqueue the callback
-      cudex::detail::throw_on_error(cudaStreamAddCallback(stream_, &callback<T>, ptr_to_f, 0), "stream_callback_executor::execute: CUDA error after cudaStreamAddCallback");
+      detail::throw_on_error(cudaStreamAddCallback(stream_, &callback<T>, ptr_to_f, 0), "stream_callback_executor::execute: CUDA error after cudaStreamAddCallback");
     }
 
     inline bool operator==(const callback_executor& other) const noexcept
