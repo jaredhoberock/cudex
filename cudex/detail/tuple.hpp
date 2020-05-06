@@ -29,9 +29,9 @@
 #include "prologue.hpp"
 
 
-#define TUPLE_NAMESPACE cudex::detail
-#define TUPLE_NAMESPACE_OPEN_BRACE namespace cudex { namespace detail {
-#define TUPLE_NAMESPACE_CLOSE_BRACE } }
+#define TUPLE_NAMESPACE CUDEX_NAMESPACE::detail
+#define TUPLE_NAMESPACE_OPEN_BRACE CUDEX_NAMESPACE_OPEN_BRACE namespace detail {
+#define TUPLE_NAMESPACE_CLOSE_BRACE } CUDEX_NAMESPACE_CLOSE_BRACE
 #define TUPLE_DETAIL_NAMESPACE tuple_detail
 #define TUPLE_ANNOTATION CUDEX_ANNOTATION
 
