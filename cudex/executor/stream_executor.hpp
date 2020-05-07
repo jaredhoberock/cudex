@@ -60,7 +60,7 @@ class stream_executor
              CUDEX_REQUIRES(std::is_trivially_copyable<Function>::value)
             >
     CUDEX_ANNOTATION
-    void execute(Function f) const noexcept
+    void execute(Function f) const
     {
       detail::launch_kernel(f, dim3(1), dim3(1), 0, stream_.native_handle(), stream_.device());
     }
