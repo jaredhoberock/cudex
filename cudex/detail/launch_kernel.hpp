@@ -33,6 +33,8 @@
 #include <cstring>
 #include <cuda_runtime_api.h>
 #include <type_traits>
+#include "throw_on_error.hpp"
+#include "throw_runtime_error.hpp"
 #include "type_traits/is_invocable.hpp"
 #include "with_current_device.hpp"
 
@@ -63,6 +65,7 @@ template<class Function,
 CUDEX_ANNOTATION
 void launch_kernel(Function kernel, dim3 grid_dim, dim3 block_dim, std::size_t shared_memory_size, cudaStream_t stream, int device)
 {
+#if __CUDACC__
   detail::with_current_device(device, [=]() mutable
   {
     // point to the kernel
@@ -71,11 +74,11 @@ void launch_kernel(Function kernel, dim3 grid_dim, dim3 block_dim, std::size_t s
     // reference the kernel to encourage the compiler not to optimize it away
     detail::workaround_unused_variable_warning(ptr_to_kernel);
 
-#if CUDEX_HAS_CUDART
+#  if CUDEX_HAS_CUDART
     // ignore empty launches
     if(grid_dim.x * grid_dim.y * grid_dim.z * block_dim.x * block_dim.y * block_dim.z != 0)
     {
-#  ifndef __CUDA_ARCH__
+#    ifndef __CUDA_ARCH__
       // point to the parameter
       void* ptr_to_arg[] = {reinterpret_cast<void*>(&kernel)};
 
@@ -84,7 +87,7 @@ void launch_kernel(Function kernel, dim3 grid_dim, dim3 block_dim, std::size_t s
       {
         detail::throw_on_error(error, "detail::launch_kernel: CUDA error after cudaLaunchKernel");
       }
-#  else
+#    else
       // copy the parameter
       void* ptr_to_arg = cudaGetParameterBuffer(std::alignment_of<Function>::value, sizeof(Function));
       std::memcpy(ptr_to_arg, &kernel, sizeof(Function));
@@ -94,12 +97,15 @@ void launch_kernel(Function kernel, dim3 grid_dim, dim3 block_dim, std::size_t s
       {
         detail::throw_on_error(error, "detail::launch_kernel: CUDA error after cudaLaunchDevice");
       }
-#  endif
+#    endif
       }
-#else
-      detail::throw_on_error(cudaErrorNotSupported, "detail::launch_kernel requires the CUDA Runtime.");
-#endif
+#  else
+      detail::throw_runtime_error("detail::launch_kernel requires the CUDA Runtime.");
+#  endif
   });
+#else
+  detail::throw_runtime_error("detail::launch_kernel requries CUDA C++ language support.");
+#endif
 }
 
 
