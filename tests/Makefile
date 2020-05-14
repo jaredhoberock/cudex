@@ -4,6 +4,9 @@ INCLUDES = -I../ -I/usr/local/cuda/include
 CCFLAGS = -std=c++11 -Wall -Werror -ferror-limit=3 $(INCLUDES) -Wno-mismatched-tags
 NVCCFLAGS = -ccbin=$(CXX) --expt-extended-lambda -rdc=true -arch=sm_35 -Xcompiler "$(CCFLAGS)"
 
+# this gets a list of all directories in this directory
+DIRECTORIES = $(sort $(wildcard */))
+
 # this first builds all the tests, then runs them, then prints if everything ran successfully
 test : all-test-sources all-cpp-test-programs all-cuda-test-programs all-test-results
 	@echo "All OK."
@@ -43,5 +46,12 @@ all-test-results : $(addprefix test., $(basename $(wildcard *.hpp))) $(addsuffix
 clean:
 	rm -f *.cpp *.cu *-cuda $(basename $(wildcard *.hpp))
 
-.PHONY : test clean $(all-test-results)
+.PHONY : test clean $(all-test-results) $(DIRECTORIES)
+
+# when the name of a directory is a target, make recursively descends into that directory
+$(DIRECTORIES):
+	$(MAKE) --directory=$@ $(TARGET)
+
+# the all target tests absolutely everything
+all: test $(DIRECTORIES)
 
