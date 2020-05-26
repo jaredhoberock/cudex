@@ -49,7 +49,7 @@ using stream_member_function_t = decltype(std::declval<T>().stream());
 
 
 class stream_property : 
-  detail::basic_executor_property<
+  public detail::basic_executor_property<
     stream_property,
     true,  // requireable
     false, // not preferable
