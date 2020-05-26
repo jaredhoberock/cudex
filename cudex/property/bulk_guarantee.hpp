@@ -139,7 +139,11 @@ struct bulk_guarantee_t :
 };
 
 
+#ifndef __CUDA_ARCH__
 static constexpr bulk_guarantee_t bulk_guarantee{};
+#else
+const __device__ bulk_guarantee_t bulk_guarantee{};
+#endif
 
 
 CUDEX_NAMESPACE_CLOSE_BRACE

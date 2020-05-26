@@ -81,7 +81,11 @@ struct allocator_t<void> :
 };
 
 
+#ifndef __CUDA_ARCH__
 static constexpr allocator_t<void> allocator{};
+#else
+const __device__ allocator_t<void> allocator{};
+#endif
 
 
 CUDEX_NAMESPACE_CLOSE_BRACE

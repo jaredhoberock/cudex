@@ -50,7 +50,11 @@ struct context_t :
 {};
 
 
+#ifndef __CUDA_ARCH__
 static constexpr context_t context{};
+#else
+const __device__ context_t context{};
+#endif
 
 
 CUDEX_NAMESPACE_CLOSE_BRACE
