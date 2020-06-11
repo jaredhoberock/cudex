@@ -28,6 +28,7 @@
 
 #include "../detail/prologue.hpp"
 
+#include <cuda_runtime_api.h>
 #include <type_traits>
 #include "../detail/type_traits/is_detected.hpp" 
 #include "../executor/is_executor.hpp" 
