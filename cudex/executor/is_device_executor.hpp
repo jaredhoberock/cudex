@@ -26,16 +26,56 @@
 
 #pragma once
 
-#include "detail/prologue.hpp"
+#include "../detail/prologue.hpp"
 
-#include "executor/bulk_execute.hpp"
-#include "executor/callback_executor.hpp"
-#include "executor/execute.hpp"
-#include "executor/is_device_executor.hpp"
-#include "executor/is_executor.hpp"
-#include "executor/is_executor_of.hpp"
-#include "executor/inline_executor.hpp"
-#include "executor/stream_executor.hpp"
+#include "../detail/type_traits/conjunction.hpp"
+#include "../detail/type_traits/disjunction.hpp"
+#include "../property/stream.hpp"
+#include "is_executor.hpp"
 
-#include "detail/epilogue.hpp"
+
+CUDEX_NAMESPACE_OPEN_BRACE
+
+
+namespace detail
+{
+
+
+template<class T>
+using stream_member_function_t = decltype(std::declval<T>().stream());
+
+
+template<class T>
+using stream_query_member_function_t = decltype(std::declval<T>().query(std::declval<stream_property>()));
+
+
+template<class T>
+using stream_query_free_function_t = decltype(query(std::declval<T>(), std::declval<stream_property>()));
+
+
+template<class T>
+using has_stream_property = disjunction<
+  is_detected<stream_member_function_t, T>,
+  is_detected<stream_query_member_function_t, T>,
+  is_detected<stream_query_free_function_t, T>
+>;
+
+
+} // end detail
+
+
+template<class T>
+using is_device_executor = detail::conjunction<
+  is_executor<T>,
+  // XXX ideally, we'd use can_query here, but cudex has not defined that trait
+  //     nor the query customization point
+  //     instead, just use something ad hoc
+  //can_query<T,stream_property>
+  detail::has_stream_property<T>
+>;
+
+
+CUDEX_NAMESPACE_CLOSE_BRACE
+
+#include "../detail/epilogue.hpp"
 
