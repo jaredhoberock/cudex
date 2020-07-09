@@ -16,6 +16,10 @@ To build and execute all test programs in all subdirectories rooted in the curre
 
     $ make all
 
+Protip: to get color-coded build output, pipe to `ccze`:
+
+    $ make all | ccze -A
+
 # Details
 
 Each `<name>.hpp` file in this directory is a C++ file containing a function named `test_<name>`.
