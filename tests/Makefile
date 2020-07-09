@@ -1,7 +1,7 @@
 CXX = clang
 NVCC = nvcc
 INCLUDES = -I../ -I/usr/local/cuda/include
-CCFLAGS = -std=c++11 -Wall -Werror -ferror-limit=3 $(INCLUDES) -Wno-mismatched-tags
+CCFLAGS = -std=c++14 -Wall -Werror -ferror-limit=3 $(INCLUDES) -Wno-mismatched-tags
 NVCCFLAGS = -ccbin=$(CXX) --expt-extended-lambda -rdc=true -arch=sm_35 -Xcompiler "$(CCFLAGS)"
 
 # this gets a list of all directories in this directory
@@ -54,4 +54,10 @@ $(DIRECTORIES):
 
 # the all target tests absolutely everything
 all: test $(DIRECTORIES)
+
+# the all_clean target cleans absolutely everything
+all_clean: clean
+	for dir in $(DIRECTORIES); do \
+	  $(MAKE) --directory=$$dir $@; \
+	 done
 
