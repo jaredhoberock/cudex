@@ -26,18 +26,34 @@
 
 #pragma once
 
-#include "detail/prologue.hpp"
+#include "../detail/prologue.hpp"
 
-#include "executor/bulk_execute.hpp"
-#include "executor/callback_executor.hpp"
-#include "executor/execute.hpp"
-#include "executor/executor_index.hpp"
-#include "executor/executor_shape.hpp"
-#include "executor/is_device_executor.hpp"
-#include "executor/is_executor.hpp"
-#include "executor/is_executor_of.hpp"
-#include "executor/inline_executor.hpp"
-#include "executor/stream_executor.hpp"
+#include <cstdint>
+#include "../detail/type_traits/is_detected.hpp"
+#include "executor_shape.hpp"
 
-#include "detail/epilogue.hpp"
+
+CUDEX_NAMESPACE_OPEN_BRACE
+
+
+template<class Executor>
+struct executor_index
+{
+  private:
+    template<class T>
+    using nested_executor_index_t = typename T::index_type;
+
+  public:
+    using type = detail::detected_or_t<executor_shape_t<Executor>, nested_executor_index_t, Executor>;
+};
+
+
+template<class Executor>
+using executor_index_t = typename executor_index<Executor>::type;
+
+
+CUDEX_NAMESPACE_CLOSE_BRACE
+
+
+#include "../detail/epilogue.hpp"
 
