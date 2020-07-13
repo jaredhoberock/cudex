@@ -110,6 +110,24 @@ struct bulk_guarantee_t :
   {}
 
 
+  struct concurrent_t :
+    detail::basic_executor_property<concurrent_t, true, true>
+  {
+    CUDEX_ANNOTATION
+    static constexpr concurrent_t value()
+    {
+      return concurrent_t{};
+    }
+  };
+
+  static constexpr concurrent_t concurrent{};
+
+  CUDEX_ANNOTATION
+  constexpr bulk_guarantee_t(const concurrent_t&)
+    : which_{4}
+  {}
+
+
   // By default, executors are unsequenced if bulk_guarantee_t cannot
   // be statically-queried through a member
   template<class Executor,
