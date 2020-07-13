@@ -33,6 +33,7 @@
 #include "../detail/launch_kernel.hpp"
 #include "../detail/stream.hpp"
 #include "../detail/type_traits/is_invocable.hpp"
+#include "../property/bulk_guarantee.hpp"
 #include "is_device_executor.hpp"
 
 
@@ -170,6 +171,13 @@ class kernel_executor
     int device() const
     {
       return stream_.device();
+    }
+
+
+    CUDEX_ANNOTATION
+    constexpr static auto query(bulk_guarantee_t)
+    {
+      return bulk_guarantee.scoped(bulk_guarantee.parallel, bulk_guarantee.concurrent);
     }
 
 

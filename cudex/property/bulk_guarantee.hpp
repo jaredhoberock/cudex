@@ -152,6 +152,78 @@ struct bulk_guarantee_t :
     return Executor::query(bulk_guarantee_t{});
   }
 
+
+  template<class OuterGuarantee, class InnerGuarantee>
+  class scoped_t
+  {
+    public:
+      static constexpr bool is_requirable = true;
+      static constexpr bool is_preferable = true;
+
+      template<class Executor,
+               CUDEX_REQUIRES(
+                 detail::has_static_query_member_function<Executor, scoped_t>::value
+               )>
+      CUDEX_ANNOTATION
+      static constexpr auto static_query()
+        -> decltype(Executor::query(std::declval<scoped_t>()))
+      {
+        return Executor::query(scoped_t{});
+      }
+
+      scoped_t() = default;
+
+      scoped_t(const scoped_t&) = default;
+
+      CUDEX_ANNOTATION
+      constexpr scoped_t(const OuterGuarantee& outer, const InnerGuarantee& inner)
+        : outer_{outer}, inner_{inner}
+      {}
+
+      CUDEX_ANNOTATION
+      constexpr OuterGuarantee outer() const
+      {
+        return outer_;
+      }
+
+      CUDEX_ANNOTATION
+      constexpr InnerGuarantee inner() const
+      {
+        return inner_;
+      }
+
+      CUDEX_ANNOTATION
+      constexpr scoped_t value() const
+      {
+        return *this;
+      }
+
+      CUDEX_ANNOTATION
+      friend constexpr bool operator==(const scoped_t& a, const scoped_t& b)
+      {
+        return (a.outer().value() == b.outer().value()) && (a.inner().value() == b.inner().value());
+      }
+
+      CUDEX_ANNOTATION
+      friend constexpr bool operator!=(const scoped_t& a, const scoped_t& b)
+      {
+        return !(a == b);
+      }
+
+    private:
+      OuterGuarantee outer_;
+      InnerGuarantee inner_;
+  }; // end scoped_t
+
+
+  template<class OuterGuarantee, class InnerGuarantee>
+  CUDEX_ANNOTATION
+  constexpr static scoped_t<OuterGuarantee,InnerGuarantee> scoped(OuterGuarantee, InnerGuarantee)
+  {
+    return {};
+  }
+
+
   private:
     int which_;
 };

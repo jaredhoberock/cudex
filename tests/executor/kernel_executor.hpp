@@ -1,5 +1,6 @@
 #include <cassert>
 #include <cudex/executor/kernel_executor.hpp>
+#include <cudex/property/bulk_guarantee.hpp>
 
 
 namespace ns = cudex;
@@ -49,6 +50,7 @@ void test_properties(cudaStream_t s, std::size_t dynamic_shared_memory_size, int
   assert(s == ex.stream());
   assert(dynamic_shared_memory_size == ex.dynamic_shared_memory_size());
   assert(d == ex.device());
+  assert(bulk_guarantee.scoped(bulk_guarantee.parallel, bulk_guarantee.concurrent) == ex.query(bulk_guarantee_t{}));
 }
 
 
