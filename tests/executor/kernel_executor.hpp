@@ -41,16 +41,27 @@ void test_equality(cudaStream_t s, std::size_t dynamic_shared_memory_size, int d
 
 
 __host__ __device__
-void test_properties(cudaStream_t s, std::size_t dynamic_shared_memory_size, int d)
+void test_properties(cudaStream_t s, std::size_t smem_size, int d)
 {
   using namespace ns;
 
-  kernel_executor ex{s, dynamic_shared_memory_size, d};
+  kernel_executor ex{s, smem_size, d};
 
   assert(s == ex.stream());
-  assert(dynamic_shared_memory_size == ex.dynamic_shared_memory_size());
+  assert(smem_size == ex.dynamic_shared_memory_size());
   assert(d == ex.device());
   assert(bulk_guarantee.scoped(bulk_guarantee.parallel, bulk_guarantee.concurrent) == ex.query(bulk_guarantee_t{}));
+
+  {
+    // require dynamic_shared_memory_size
+    std::size_t expected = 16;
+    kernel_executor ex1 = ex.require(dynamic_shared_memory_size(expected));
+    assert(s == ex1.stream());
+    assert(s == ex.stream());
+    assert(expected == ex.dynamic_shared_memory_size());
+    assert(d == ex.device());
+    assert(bulk_guarantee.scoped(bulk_guarantee.parallel, bulk_guarantee.concurrent) == ex.query(bulk_guarantee_t{}));
+  }
 }
 
 

@@ -34,6 +34,7 @@
 #include "../detail/stream.hpp"
 #include "../detail/type_traits/is_invocable.hpp"
 #include "../property/bulk_guarantee.hpp"
+#include "../property/dynamic_shared_memory_size.hpp"
 #include "is_device_executor.hpp"
 
 
@@ -157,6 +158,13 @@ class kernel_executor
     std::size_t dynamic_shared_memory_size() const
     {
       return dynamic_shared_memory_size_;
+    }
+
+
+    CUDEX_ANNOTATION
+    kernel_executor require(dynamic_shared_memory_size_property request) const
+    {
+      return {stream(), request.value(), device()};
     }
 
 
