@@ -1,6 +1,12 @@
 #include <cassert>
 #include <iostream>
+#include <tuple>
+#include <utility>
 #include <cudex/executor/bulk_execute.hpp>
+
+
+namespace ns = cudex;
+
 
 #ifndef __CUDACC__
 #define __host__
@@ -65,9 +71,9 @@ struct has_execute_member_function_and_static_unsequenced_guarantee
   }
 
   __host__ __device__
-  constexpr static cudex::bulk_guarantee_t::unsequenced_t query(cudex::bulk_guarantee_t)
+  constexpr static ns::bulk_guarantee_t::unsequenced_t query(ns::bulk_guarantee_t)
   {
-    return cudex::bulk_guarantee.unsequenced;
+    return ns::bulk_guarantee.unsequenced;
   }
 };
 
@@ -104,6 +110,18 @@ void execute(const has_execute_free_function_and_static_unsequenced_guarantee&, 
 {
   f();
 }
+
+
+struct has_2d_shape : has_execute_member_function_and_static_unsequenced_guarantee
+{
+  using shape_type = std::pair<int,int>;
+};
+
+
+struct has_3d_shape : has_execute_member_function_and_static_unsequenced_guarantee
+{
+  using shape_type = std::tuple<int,int,int>;
+};
 
 
 __host__ __device__
@@ -174,7 +192,7 @@ void test(const Executor& e)
   
   // test copyable invocable
   size_t result = 1;
-  cudex::bulk_execute(e, [&](size_t i)
+  ns::bulk_execute(e, [&](size_t i)
   {
     result *= (i + 1);
   }, n);
@@ -183,7 +201,7 @@ void test(const Executor& e)
   
   // test non-copyable invocable
   result = 1;
-  cudex::bulk_execute(e, make_noncopyable([&](size_t i)
+  ns::bulk_execute(e, make_noncopyable([&](size_t i)
   {
     result *= (i + 1);
   }), n);
@@ -192,12 +210,73 @@ void test(const Executor& e)
 
   // test non-movable invocable
   result = 1;
-  cudex::bulk_execute(e, make_nonmovable([&](size_t i)
+  ns::bulk_execute(e, make_nonmovable([&](size_t i)
   {
     result *= (i + 1);
   }), n);
   
   assert(result == factorial(n));
+}
+
+
+template<class Executor>
+__host__ __device__
+void test_2d(const Executor& e)
+{
+  // std::pair is unavailable in __device__ code
+#ifndef __CUDA_ARCH__
+  std::pair<int,int> shape{4,4};
+
+  int result = 0;
+  ns::bulk_execute(e, [&](ns::executor_index_t<Executor> idx)
+  {
+    result += idx.first + idx.second;
+  },
+  shape);
+
+  int expected = 0;
+  for(int i = 0; i < shape.first; ++i)
+  {
+    for(int j = 0; j < shape.second; ++j)
+    {
+      expected += i + j;
+    }
+  }
+
+  assert(expected == result);
+#endif
+}
+
+
+template<class Executor>
+__host__ __device__
+void test_3d(const Executor& e)
+{
+  // std::tuple is unavailable in __device__ code
+#ifndef __CUDA_ARCH__
+  std::tuple<int,int,int> shape{3,3,3};
+
+  int result = 0;
+  ns::bulk_execute(e, [&](ns::executor_index_t<Executor> idx)
+  {
+    result += std::get<0>(idx) + std::get<1>(idx) + std::get<2>(idx);
+  },
+  shape);
+
+  int expected = 0;
+  for(int i = 0; i < std::get<0>(shape); ++i)
+  {
+    for(int j = 0; j < std::get<1>(shape); ++j)
+    {
+      for(int k = 0; k < std::get<2>(shape); ++k)
+      {
+        expected += i + j + k;
+      }
+    }
+  }
+
+  assert(expected == result);
+#endif
 }
 
 
@@ -228,11 +307,15 @@ __global__ void device_invoke(F f)
 void test_bulk_execute()
 {
   test();
+  test_2d(has_2d_shape{});
+  test_3d(has_3d_shape{});
 
 #ifdef __CUDACC__
   device_invoke<<<1,1>>>([] __device__ ()
   {
     test();
+    test_2d(has_2d_shape{});
+    test_3d(has_3d_shape{});
   });
   assert(cudaDeviceSynchronize() == cudaSuccess);
 #endif
