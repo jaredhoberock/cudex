@@ -52,6 +52,14 @@
 #error CUDEX_REQUIRES defined in client code.
 #endif
 
+#ifdef CUDEX_REQUIRES_DEF
+#error CUDEX_REQUIRES_DEF defined in client code.
+#endif
+
+#ifdef CUDEX_REQUIRES_DEF_IMPL
+#error CUDEX_REQUIRES_DEF_IMPL defined in client code.
+#endif
+
 #ifdef CUDEX_REQUIRES_IMPL
 #error CUDEX_REQUIRES_IMPL defined in client code.
 #endif

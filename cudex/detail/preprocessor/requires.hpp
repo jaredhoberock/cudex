@@ -27,6 +27,12 @@
 
 #  define CUDEX_REQUIRES(...) CUDEX_REQUIRES_IMPL(CUDEX_MAKE_UNIQUE(__deduced_true), __VA_ARGS__)
 
+
+#  define CUDEX_REQUIRES_DEF_IMPL(unique_name, ...) bool unique_name, typename std::enable_if<(unique_name and __VA_ARGS__)>::type*
+
+#  define CUDEX_REQUIRES_DEF(...) CUDEX_REQUIRES_DEF_IMPL(CUDEX_MAKE_UNIQUE(__deduced_true), __VA_ARGS__)
+
+
 #elif defined(CUDEX_REQUIRES)
 
 #  ifdef CUDEX_CONCATENATE_IMPL
@@ -47,6 +53,14 @@
 
 #  ifdef CUDEX_REQUIRES
 #    undef CUDEX_REQUIRES
+#  endif
+
+#  ifdef CUDEX_REQUIRES_DEF_IMPL
+#    undef CUDEX_REQUIRES_DEF_IMPL
+#  endif
+
+#  ifdef CUDEX_REQUIRES_DEF
+#    undef CUDEX_REQUIRES_DEF
 #  endif
 
 #endif
