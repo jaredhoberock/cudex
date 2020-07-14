@@ -28,6 +28,10 @@
 
 #include "prologue.hpp"
 
+// for std::get used below
+#include <tuple>
+#include <utility>
+
 
 #define TUPLE_NAMESPACE CUDEX_NAMESPACE::detail
 #define TUPLE_NAMESPACE_OPEN_BRACE CUDEX_NAMESPACE_OPEN_BRACE namespace detail {
@@ -45,6 +49,28 @@
 #undef TUPLE_DETAIL_NAMESPACE
 #undef TUPLE_ANNOTATION
 #undef TUPLE_EXEC_CHECK_DISABLE
+
+
+CUDEX_NAMESPACE_OPEN_BRACE
+
+
+namespace detail
+{
+
+
+CUDEX_EXEC_CHECK_DISABLE
+template<std::size_t i, class TupleLike>
+CUDEX_ANNOTATION
+constexpr decltype(auto) get(TupleLike&& t)
+{
+  return std::get<i>(std::forward<TupleLike>(t));
+}
+
+
+} // end detail
+
+
+CUDEX_NAMESPACE_CLOSE_BRACE
 
 #include "epilogue.hpp"
 
