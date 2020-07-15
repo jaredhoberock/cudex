@@ -1,4 +1,5 @@
-#include <cudex/executor.hpp>
+#include <cudex/detail/prologue.hpp>
+#include <cudex/detail/epilogue.hpp>
 
 #ifdef CUDEX_INCLUDE_LEVEL
 #error CUDEX_INCLUDE_LEVEL defined in client code.
