@@ -38,7 +38,6 @@
 #include "executor/is_executor_of.hpp"
 #include "executor/inline_executor.hpp"
 #include "executor/kernel_executor.hpp"
-#include "executor/stream_executor.hpp"
 
 #include "detail/epilogue.hpp"
 

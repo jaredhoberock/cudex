@@ -113,7 +113,7 @@ void test_bulk_execute(cudaStream_t s, int d)
 
   ex1.bulk_execute([=] __device__ (kernel_executor::index_type idx)
   {
-    int result = hash_index(idx);
+    unsigned int result = hash_index(idx);
 
     bulk_result[idx.block.x][idx.block.y][idx.block.z][idx.thread.x][idx.thread.y][idx.thread.z] = result;
   }, shape);

@@ -3,7 +3,7 @@
 #include <utility>
 #include <cudex/executor/executor_index.hpp>
 #include <cudex/executor/inline_executor.hpp>
-#include <cudex/executor/stream_executor.hpp>
+#include <cudex/executor/kernel_executor.hpp>
 
 
 namespace ns = cudex;
@@ -37,7 +37,7 @@ void test()
   static_assert(std::is_same<std::pair<int,int>, ns::executor_index_t<has_nested_shape_type>>::value, "Error.");
   static_assert(std::is_same<std::tuple<int,int,int>, ns::executor_index_t<has_nested_index_type>>::value, "Error.");
   static_assert(std::is_same<std::size_t, ns::executor_index_t<ns::inline_executor>>::value, "Error.");
-  static_assert(std::is_same<std::size_t, ns::executor_index_t<ns::stream_executor>>::value, "Error.");
+  static_assert(std::is_same<ns::kernel_executor::index_type, ns::executor_index_t<ns::kernel_executor>>::value, "Error.");
 }
 
 

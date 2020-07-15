@@ -34,8 +34,9 @@
 #include "detail/event.hpp"
 #include "detail/terminate.hpp"
 #include "detail/throw_on_error.hpp"
+#include "detail/type_traits/is_invocable.hpp"
 #include "detail/with_current_device.hpp"
-#include "executor/stream_executor.hpp"
+#include "executor/kernel_executor.hpp"
 
 
 CUDEX_NAMESPACE_OPEN_BRACE
@@ -44,9 +45,9 @@ CUDEX_NAMESPACE_OPEN_BRACE
 class static_stream_pool
 {
   public:
-    // static_stream_pool::executor_type is just like stream_executor
+    // static_stream_pool::executor_type is just like kernel_executor
     // except that execute cannot be called from __device__ code
-    class executor_type : private stream_executor
+    class executor_type : private kernel_executor
     {
       public:
         executor_type(const executor_type&) = default;
@@ -54,7 +55,7 @@ class static_stream_pool
         CUDEX_ANNOTATION
         inline bool operator==(const executor_type& other) const
         {
-          return stream_executor::operator==(other);
+          return kernel_executor::operator==(other);
         }
 
         CUDEX_ANNOTATION
@@ -63,21 +64,35 @@ class static_stream_pool
           return !(*this == other);
         }
 
-        using stream_executor::stream;
-        using stream_executor::device;
+        using kernel_executor::device;
+        using kernel_executor::index_type;
+        using kernel_executor::shape_type;
+        using kernel_executor::stream;
 
         // executor_type::execute can only be called on the host
         // because its stream was created on the host
         template<class Function,
+                 CUDEX_REQUIRES(detail::is_invocable<Function>::value),
                  CUDEX_REQUIRES(std::is_trivially_copyable<Function>::value)
                 >
-        void execute(Function f) const noexcept
+        void execute(Function f) const
         {
-          stream_executor::execute(std::move(f));
+          kernel_executor::execute(f);
+        }
+
+        // executor_type::bulk_execute can only be called on the host
+        // because its stream was created on the host
+        template<class Function,
+                 CUDEX_REQUIRES(detail::is_invocable<Function,index_type>::value),
+                 CUDEX_REQUIRES(std::is_trivially_copyable<Function>::value)
+                >
+        void bulk_execute(Function f, shape_type shape) const
+        {
+          kernel_executor::bulk_execute(f, shape);
         }
 
       private:
-        executor_type(cudaStream_t s, int d) : stream_executor{s,d} {}
+        executor_type(cudaStream_t s, int d) : kernel_executor{s,d} {}
         friend class static_stream_pool;
     };
 

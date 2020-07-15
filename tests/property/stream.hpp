@@ -1,5 +1,5 @@
 #include <cassert>
-#include <cudex/executor/stream_executor.hpp>
+#include <cudex/executor/kernel_executor.hpp>
 #include <cudex/property/stream.hpp>
 
 
@@ -38,7 +38,7 @@ void test()
 
 void test_stream()
 {
-  test<ns::stream_executor>();
+  test<ns::kernel_executor>();
   test<my_executor_with_stream_member>();
 }
 

@@ -2,6 +2,9 @@
 #include <cudex/stream_pool.hpp>
 
 
+namespace ns = cudex;
+
+
 #ifndef __host__
 #define __host__
 #endif
@@ -22,12 +25,62 @@
 __managed__ int result;
 
 
-void test_execute(cudex::static_stream_pool::executor_type ex, int expected)
+void test_execute(ns::static_stream_pool::executor_type ex, int expected)
 {
   ex.execute([=] __device__
   {
     result = expected;
   });
+}
+
+
+__host__ __device__
+unsigned int hash_index(ns::kernel_executor::index_type idx)
+{
+  return idx.block.x ^ idx.block.y ^ idx.block.z ^ idx.thread.x ^ idx.thread.y ^ idx.thread.z;
+}
+
+
+// this array has blockIdx X threadIdx axes
+// put 4 elements in each axis
+__managed__ unsigned int bulk_result[4][4][4][4][4][4] = {};
+
+
+void test_bulk_execute(ns::static_stream_pool::executor_type ex)
+{
+  ns::static_stream_pool::executor_type::shape_type shape{::dim3(4,4,4), ::dim3(4,4,4)};
+
+  ex.bulk_execute([=] __device__ (ns::static_stream_pool::executor_type::index_type idx)
+  {
+    unsigned int result = hash_index(idx);
+
+    bulk_result[idx.block.x][idx.block.y][idx.block.z][idx.thread.x][idx.thread.y][idx.thread.z] = result;
+  }, shape);
+
+  assert(cudaStreamSynchronize(ex.stream()) == cudaSuccess);
+
+  for(unsigned int bx = 0; bx != shape.grid.x; ++bx)
+  {
+    for(unsigned int by = 0; by != shape.grid.y; ++by)
+    {
+      for(unsigned int bz = 0; bz != shape.grid.z; ++bz)
+      {
+        for(unsigned int tx = 0; tx != shape.block.x; ++tx)
+        {
+          for(unsigned int ty = 0; ty != shape.block.y; ++ty)
+          {
+            for(unsigned int tz = 0; tz != shape.block.z; ++tz)
+            {
+              ns::static_stream_pool::executor_type::index_type idx{{bx,by,bz}, {tx,ty,tz}};
+              unsigned int expected = hash_index(idx);
+
+              assert(expected == bulk_result[idx.block.x][idx.block.y][idx.block.z][idx.thread.x][idx.thread.y][idx.thread.z]);
+            }
+          }
+        }
+      }
+    }
+  }
 }
 
 
@@ -51,6 +104,19 @@ void test_stream_pool()
     pool.wait();
 
     assert(result == expected);
+  }
+#endif
+
+
+#ifdef __CUDACC__
+  {
+    // static_stream_pool::executor_type::bulk_execute requires a CUDA C++ compiler
+
+    static_stream_pool pool(0, 4);
+
+    static_stream_pool::executor_type ex = pool.executor();
+
+    test_bulk_execute(ex);
   }
 #endif
 
