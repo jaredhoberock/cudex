@@ -128,3 +128,5 @@ const __device__ coordinate_type_property<T> coordinate_type;
 
 CUDEX_NAMESPACE_CLOSE_BRACE
 
+#include "../detail/epilogue.hpp"
+
