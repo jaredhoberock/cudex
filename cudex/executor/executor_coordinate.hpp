@@ -26,70 +26,30 @@
 
 #pragma once
 
-#include "../../../detail/prologue.hpp"
+#include "../detail/prologue.hpp"
 
-#include <tuple>
-#include <type_traits>
-#include "../../../detail/tuple.hpp"
-#include "../../../detail/utility/index_sequence.hpp"
+#include <cstdint>
+#include "../detail/type_traits/is_detected.hpp"
+#include "../property/coordinate_type.hpp"
 
 
 CUDEX_NAMESPACE_OPEN_BRACE
 
 
-namespace detail
+template<class Executor>
+struct executor_coordinate
 {
+  using type = typename decltype(query(std::declval<Executor>(), coordinate_type<>))::type;
+};
 
 
-template<class Coord,
-         CUDEX_REQUIRES(std::is_integral<Coord>::value)
-        >
-CUDEX_ANNOTATION
-constexpr bool in_iteration_space(const Coord& coord, const Coord& shape)
-{
-  return coord < shape;
-}
-
-
-template<class Coord,
-         CUDEX_REQUIRES(!std::is_integral<Coord>::value)
-        >
-CUDEX_ANNOTATION
-constexpr bool in_iteration_space(const Coord& coord, const Coord& shape);
-
-
-template<class Coord>
-CUDEX_ANNOTATION
-constexpr bool in_iteration_space_impl(const Coord&, const Coord&, index_sequence<>)
-{
-  return true;
-}
-
-
-template<class Coord, std::size_t i0, std::size_t... is>
-CUDEX_ANNOTATION
-constexpr bool in_iteration_space_impl(const Coord& coord, const Coord& shape, index_sequence<i0,is...>)
-{
-  return detail::in_iteration_space(detail::get<i0>(coord), detail::get<i0>(shape)) and detail::in_iteration_space_impl(coord, shape, index_sequence<is...>{});
-}
-
-
-template<class Coord,
-         CUDEX_REQUIRES_DEF(!std::is_integral<Coord>::value)
-        >
-CUDEX_ANNOTATION
-constexpr bool in_iteration_space(const Coord& coord, const Coord& shape)
-{
-  constexpr std::size_t num_axes = std::tuple_size<Coord>::value;
-
-  return detail::in_iteration_space_impl(coord, shape, make_index_sequence<num_axes>{});
-}
-
-
-} // end detail
+template<class Executor>
+using executor_coordinate_t = typename executor_coordinate<Executor>::type;
 
 
 CUDEX_NAMESPACE_CLOSE_BRACE
 
-#include "../../../detail/epilogue.hpp"
+
+#include "../detail/epilogue.hpp"
+
 

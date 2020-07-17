@@ -45,7 +45,7 @@ namespace detail
 {
 
 
-template<class Function, class Index>
+template<class Function, class Coord>
 struct invoke_with_builtin_indices
 {
   mutable Function f;
@@ -54,7 +54,7 @@ struct invoke_with_builtin_indices
   void operator()() const
   {
 #ifdef __CUDA_ARCH__
-    detail::invoke(f, Index{blockIdx, threadIdx});
+    detail::invoke(f, Coord{blockIdx, threadIdx});
 #endif
   }
 };
@@ -105,30 +105,22 @@ class kernel_executor
     }
 
 
-    // XXX TODO shape_type should have a tuple-like interface
-    struct shape_type
+    // XXX TODO coordinate_type should have a tuple-like interface
+    struct coordinate_type
     {
-      ::dim3 grid;
       ::dim3 block;
-    };
-
-
-    // XXX TODO index_type should have a tuple-like interface
-    struct index_type
-    {
-      ::uint3 block;
-      ::uint3 thread;
+      ::dim3 thread;
     };
 
 
     template<class Function,
              CUDEX_REQUIRES(std::is_trivially_copyable<Function>::value),
-             CUDEX_REQUIRES(detail::is_invocable<Function,index_type>::value)
+             CUDEX_REQUIRES(detail::is_invocable<Function,coordinate_type>::value)
             >
     CUDEX_ANNOTATION
-    void bulk_execute(Function f, shape_type shape) const
+    void bulk_execute(Function f, coordinate_type shape) const
     {
-      detail::launch_kernel(detail::invoke_with_builtin_indices<Function,index_type>{f}, shape.grid, shape.block, dynamic_shared_memory_size_, stream_.native_handle(), stream_.device());
+      detail::launch_kernel(detail::invoke_with_builtin_indices<Function,coordinate_type>{f}, shape.block, shape.thread, dynamic_shared_memory_size_, stream_.native_handle(), stream_.device());
     }
 
 

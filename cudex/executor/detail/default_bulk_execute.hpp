@@ -38,11 +38,10 @@
 #include "../../property/bulk_guarantee.hpp"
 #include "../../property/detail/static_query.hpp"
 #include "../execute.hpp"
-#include "../executor_index.hpp"
-#include "../executor_shape.hpp"
+#include "../executor_coordinate.hpp"
 #include "../is_executor.hpp"
 #include "detail/in_iteration_space.hpp"
-#include "detail/next_index.hpp"
+#include "detail/next_coordinate.hpp"
 
 
 CUDEX_NAMESPACE_OPEN_BRACE
@@ -61,16 +60,16 @@ using has_unsequenced_bulk_guarantee = is_detected_exact<
 >;
 
 
-template<class Function, class Index>
-struct invoke_with_index
+template<class Function, class Coord>
+struct invoke_with_coord
 {
   mutable Function f;
-  Index idx;
+  Coord coord;
 
   CUDEX_ANNOTATION
   void operator()() const
   {
-    detail::invoke(f,idx);
+    detail::invoke(f,coord);
   }
 };
 
@@ -79,32 +78,31 @@ CUDEX_EXEC_CHECK_DISABLE
 template<class Executor, class Function,
          CUDEX_REQUIRES(is_executor<Executor>::value),
          CUDEX_REQUIRES(has_unsequenced_bulk_guarantee<Executor>::value),
-         CUDEX_REQUIRES(is_invocable<remove_cvref_t<Function>,executor_index_t<Executor>>::value),
+         CUDEX_REQUIRES(is_invocable<remove_cvref_t<Function>,executor_coordinate_t<Executor>>::value),
          CUDEX_REQUIRES(std::is_copy_constructible<remove_cvref_t<Function>>::value)
         >
 CUDEX_ANNOTATION
-void default_bulk_execute(const Executor& ex, Function&& f, executor_shape_t<Executor> shape)
+void default_bulk_execute(const Executor& ex, Function&& f, executor_coordinate_t<Executor> shape)
 {
-  using index_type = executor_index_t<Executor>;
+  using coord_type = executor_coordinate_t<Executor>;
 
-  // XXX we need to make the final result of next_shape be equal to shape
-  for(index_type idx = index_type{}; detail::in_iteration_space(idx, shape); detail::next_index(idx, shape))
+  for(coord_type coord = coord_type{}; detail::in_iteration_space(coord, shape); detail::next_coordinate(coord, shape))
   {
-    CUDEX_NAMESPACE::execute(ex, invoke_with_index<remove_cvref_t<Function>,index_type>{f, idx});
+    CUDEX_NAMESPACE::execute(ex, invoke_with_coord<remove_cvref_t<Function>,coord_type>{f, coord});
   }
 }
 
 
-template<class Function, class Index>
-struct invoke_reference_with_index
+template<class Function, class Coord>
+struct invoke_reference_with_coord
 {
   Function& f;
-  Index idx;
+  Coord coord;
 
   CUDEX_ANNOTATION
   void operator()() const
   {
-    detail::invoke(f,idx);
+    detail::invoke(f,coord);
   }
 };
 
@@ -113,19 +111,17 @@ CUDEX_EXEC_CHECK_DISABLE
 template<class Executor, class Function,
          CUDEX_REQUIRES(is_executor<Executor>::value),
          CUDEX_REQUIRES(has_unsequenced_bulk_guarantee<Executor>::value),
-         CUDEX_REQUIRES(is_invocable<remove_cvref_t<Function>&,executor_index_t<Executor>>::value),
+         CUDEX_REQUIRES(is_invocable<remove_cvref_t<Function>&,executor_coordinate_t<Executor>>::value),
          CUDEX_REQUIRES(!std::is_copy_constructible<remove_cvref_t<Function>>::value)
         >
 CUDEX_ANNOTATION
-void default_bulk_execute(const Executor& ex, Function&& f, executor_shape_t<Executor> shape)
+void default_bulk_execute(const Executor& ex, Function&& f, executor_coordinate_t<Executor> shape)
 {
-  using index_type = executor_index_t<Executor>;
+  using coord_type = executor_coordinate_t<Executor>;
 
-  // XXX we need to make the final result of next_shape be equal to shape
-  //     or we need to insist that all the elements of idx are < the corresponding elements of shape
-  for(index_type idx = index_type{}; detail::in_iteration_space(idx, shape); detail::next_index(idx, shape))
+  for(coord_type coord = coord_type{}; detail::in_iteration_space(coord, shape); detail::next_coordinate(coord, shape))
   {
-    CUDEX_NAMESPACE::execute(ex, invoke_reference_with_index<remove_cvref_t<Function>,index_type>{f, idx});
+    CUDEX_NAMESPACE::execute(ex, invoke_reference_with_coord<remove_cvref_t<Function>,coord_type>{f, coord});
   }
 }
 

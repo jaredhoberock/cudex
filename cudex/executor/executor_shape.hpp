@@ -28,23 +28,14 @@
 
 #include "../detail/prologue.hpp"
 
-#include <cstdint>
-#include "../detail/type_traits/is_detected.hpp"
+#include "executor_coordinate.hpp"
 
 
 CUDEX_NAMESPACE_OPEN_BRACE
 
 
 template<class Executor>
-struct executor_shape
-{
-  private:
-    template<class T>
-    using nested_executor_shape_t = typename T::shape_type;
-
-  public:
-    using type = detail::detected_or_t<std::size_t, nested_executor_shape_t, Executor>;
-};
+using executor_shape = executor_coordinate<Executor>;
 
 
 template<class Executor>

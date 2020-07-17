@@ -65,8 +65,7 @@ class static_stream_pool
         }
 
         using kernel_executor::device;
-        using kernel_executor::index_type;
-        using kernel_executor::shape_type;
+        using kernel_executor::coordinate_type;
         using kernel_executor::stream;
 
         // executor_type::execute can only be called on the host
@@ -83,10 +82,10 @@ class static_stream_pool
         // executor_type::bulk_execute can only be called on the host
         // because its stream was created on the host
         template<class Function,
-                 CUDEX_REQUIRES(detail::is_invocable<Function,index_type>::value),
+                 CUDEX_REQUIRES(detail::is_invocable<Function,coordinate_type>::value),
                  CUDEX_REQUIRES(std::is_trivially_copyable<Function>::value)
                 >
-        void bulk_execute(Function f, shape_type shape) const
+        void bulk_execute(Function f, coordinate_type shape) const
         {
           kernel_executor::bulk_execute(f, shape);
         }

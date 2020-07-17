@@ -40,95 +40,95 @@ namespace detail
 {
 
 
-// XXX this is pseudocode for next_index
+// XXX this is pseudocode for next_coordinate
 //     something like constexpr for is required to actually implement it this way
-//template<class Index, class Shape>
+//template<class Coord>
 //CUDEX_ANNOTATION
-//void next_index(Index& index, const Shape& shape)
+//void next_index(Coord& coord, const Coord& shape)
 //{
-//  constexpr Index origin{};
+//  constexpr Coord origin{};
 //
-//  for(std::size_t dimension = std::tuple_size<Index>::value; dimension-- > 0;)
+//  for(std::size_t dimension = std::tuple_size<Coord>::value; dimension-- > 0;)
 //  {
 //    // recurse into this dimension
-//    detail::next_index(detail::get<dimension>(index), detail::get<dimension>(shape));
+//    detail::next_coord(detail::get<dimension>(coord), detail::get<dimension>(shape));
 //
-//    if(detail::get<dimension>(index) < detail::get<dimension>(shape))
+//    if(detail::get<dimension>(coord) < detail::get<dimension>(shape))
 //    {
 //      return;
 //    }
 //    else if(dimension > 0)
 //    {
 //      // don't roll the final dimension over to the origin
-//      detail::get<dimension>(index) = detail::get<dimension>(origin);
+//      detail::get<dimension>(coord) = detail::get<dimension>(origin);
 //    }
 //  }
 //}
 
 
-// integral index case
-template<class Index, class Shape,
-         CUDEX_REQUIRES(std::is_integral<Index>::value)
+// integral coordinate case
+template<class Coord,
+         CUDEX_REQUIRES(std::is_integral<Coord>::value)
         >
 CUDEX_ANNOTATION
-void next_index(Index& index, const Shape&)
+void next_coordinate(Coord& coord, const Coord&)
 {
-  ++index;
+  ++coord;
 }
 
 
-// tuple-like index case
-template<class Index, class Shape,
-         CUDEX_REQUIRES(!std::is_integral<Index>::value)
+// tuple-like coordinate case
+template<class Coord,
+         CUDEX_REQUIRES(!std::is_integral<Coord>::value)
         >
 CUDEX_ANNOTATION
-void next_index(Index& index, const Shape& shape);
+void next_coordinate(Coord& coord, const Coord& shape);
 
 
-template<class Index, class Shape>
+template<class Coord>
 CUDEX_ANNOTATION
-void next_index_impl(std::integral_constant<std::size_t,0>, Index& index, const Shape& shape)
+void next_coordinate_impl(std::integral_constant<std::size_t,0>, Coord& coord, const Coord& shape)
 {
   // terminal case -- dimension zero
 
   // recurse into this dimension
-  detail::next_index(detail::get<0>(index), detail::get<0>(shape));
+  detail::next_coordinate(detail::get<0>(coord), detail::get<0>(shape));
 
   // don't roll dimension zero over to the origin
 }
 
 
-template<std::size_t dimension, class Index, class Shape>
+template<std::size_t dimension, class Coord>
 CUDEX_ANNOTATION
-void next_index_impl(std::integral_constant<std::size_t,dimension>, Index& index, const Shape& shape)
+void next_coordinate_impl(std::integral_constant<std::size_t,dimension>, Coord& coord, const Coord& shape)
 {
-  constexpr Index origin{};
+  constexpr Coord origin{};
 
   // recurse into this dimension
-  detail::next_index(detail::get<dimension>(index), detail::get<dimension>(shape));
+  detail::next_coordinate(detail::get<dimension>(coord), detail::get<dimension>(shape));
 
-  if(detail::get<dimension>(index) < detail::get<dimension>(shape))
+  if(detail::get<dimension>(coord) < detail::get<dimension>(shape))
   {
     // break the iteration
     return;
   }
 
   // don't roll this dimension over to the origin
-  detail::get<dimension>(index) = detail::get<dimension>(origin);
+  detail::get<dimension>(coord) = detail::get<dimension>(origin);
 
   // continue iterating with dimension-1
-  detail::next_index_impl(std::integral_constant<std::size_t,dimension-1>{}, index, shape);
+  detail::next_coordinate_impl(std::integral_constant<std::size_t,dimension-1>{}, coord, shape);
 }
 
 
-template<class Index, class Shape,
-         CUDEX_REQUIRES_DEF(!std::is_integral<Index>::value)
+template<class Coord,
+         CUDEX_REQUIRES_DEF(!std::is_integral<Coord>::value)
         >
 CUDEX_ANNOTATION
-void next_index(Index& index, const Shape& shape)
+void next_coordinate(Coord& coord, const Coord& shape)
 {
-  constexpr std::size_t dimension = std::tuple_size<Index>::value - 1;
-  detail::next_index_impl(std::integral_constant<std::size_t,dimension>{}, index, shape);
+  constexpr std::size_t dimension = std::tuple_size<Coord>::value - 1;
+  detail::next_coordinate_impl(std::integral_constant<std::size_t,dimension>{}, coord, shape);
 }
 
 

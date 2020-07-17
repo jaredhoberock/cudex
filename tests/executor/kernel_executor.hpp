@@ -91,9 +91,9 @@ void test_execute(cudaStream_t s, int d)
 
 
 __host__ __device__
-unsigned int hash_index(ns::kernel_executor::index_type idx)
+unsigned int hash_coord(ns::kernel_executor::coordinate_type coord)
 {
-  return idx.block.x ^ idx.block.y ^ idx.block.z ^ idx.thread.x ^ idx.thread.y ^ idx.thread.z;
+  return coord.block.x ^ coord.block.y ^ coord.block.z ^ coord.thread.x ^ coord.thread.y ^ coord.thread.z;
 }
 
 
@@ -109,13 +109,13 @@ void test_bulk_execute(cudaStream_t s, int d)
 
   kernel_executor ex1{s, d};
 
-  kernel_executor::shape_type shape{::dim3(4,4,4), ::dim3(4,4,4)};
+  kernel_executor::coordinate_type shape{::dim3(4,4,4), ::dim3(4,4,4)};
 
-  ex1.bulk_execute([=] __device__ (kernel_executor::index_type idx)
+  ex1.bulk_execute([=] __device__ (kernel_executor::coordinate_type coord)
   {
-    unsigned int result = hash_index(idx);
+    unsigned int result = hash_coord(coord);
 
-    bulk_result[idx.block.x][idx.block.y][idx.block.z][idx.thread.x][idx.thread.y][idx.thread.z] = result;
+    bulk_result[coord.block.x][coord.block.y][coord.block.z][coord.thread.x][coord.thread.y][coord.thread.z] = result;
   }, shape);
 
 #ifndef __CUDA_ARCH__
@@ -124,22 +124,22 @@ void test_bulk_execute(cudaStream_t s, int d)
   assert(cudaDeviceSynchronize() == cudaSuccess);
 #endif
 
-  for(unsigned int bx = 0; bx != shape.grid.x; ++bx)
+  for(unsigned int bx = 0; bx != shape.block.x; ++bx)
   {
-    for(unsigned int by = 0; by != shape.grid.y; ++by)
+    for(unsigned int by = 0; by != shape.block.y; ++by)
     {
-      for(unsigned int bz = 0; bz != shape.grid.z; ++bz)
+      for(unsigned int bz = 0; bz != shape.block.z; ++bz)
       {
-        for(unsigned int tx = 0; tx != shape.block.x; ++tx)
+        for(unsigned int tx = 0; tx != shape.thread.x; ++tx)
         {
-          for(unsigned int ty = 0; ty != shape.block.y; ++ty)
+          for(unsigned int ty = 0; ty != shape.thread.y; ++ty)
           {
-            for(unsigned int tz = 0; tz != shape.block.z; ++tz)
+            for(unsigned int tz = 0; tz != shape.thread.z; ++tz)
             {
-              kernel_executor::index_type idx{{bx,by,bz}, {tx,ty,tz}};
-              unsigned int expected = hash_index(idx);
+              kernel_executor::coordinate_type coord{{bx,by,bz}, {tx,ty,tz}};
+              unsigned int expected = hash_coord(coord);
 
-              assert(expected == bulk_result[idx.block.x][idx.block.y][idx.block.z][idx.thread.x][idx.thread.y][idx.thread.z]);
+              assert(expected == bulk_result[coord.block.x][coord.block.y][coord.block.z][coord.thread.x][coord.thread.y][coord.thread.z]);
             }
           }
         }

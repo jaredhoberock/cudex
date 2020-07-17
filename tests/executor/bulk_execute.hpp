@@ -3,6 +3,7 @@
 #include <tuple>
 #include <utility>
 #include <cudex/executor/bulk_execute.hpp>
+#include <cudex/executor/executor_coordinate.hpp>
 
 
 namespace ns = cudex;
@@ -112,15 +113,15 @@ void execute(const has_execute_free_function_and_static_unsequenced_guarantee&, 
 }
 
 
-struct has_2d_shape : has_execute_member_function_and_static_unsequenced_guarantee
+struct has_2d_coordinate : has_execute_member_function_and_static_unsequenced_guarantee
 {
-  using shape_type = std::pair<int,int>;
+  using coordinate_type = std::pair<int,int>;
 };
 
 
-struct has_3d_shape : has_execute_member_function_and_static_unsequenced_guarantee
+struct has_3d_coordinate : has_execute_member_function_and_static_unsequenced_guarantee
 {
-  using shape_type = std::tuple<int,int,int>;
+  using coordinate_type = std::tuple<int,int,int>;
 };
 
 
@@ -228,9 +229,9 @@ void test_2d(const Executor& e)
   std::pair<int,int> shape{4,4};
 
   int result = 0;
-  ns::bulk_execute(e, [&](ns::executor_index_t<Executor> idx)
+  ns::bulk_execute(e, [&](ns::executor_coordinate_t<Executor> coord)
   {
-    result += idx.first + idx.second;
+    result += coord.first + coord.second;
   },
   shape);
 
@@ -257,9 +258,9 @@ void test_3d(const Executor& e)
   std::tuple<int,int,int> shape{3,3,3};
 
   int result = 0;
-  ns::bulk_execute(e, [&](ns::executor_index_t<Executor> idx)
+  ns::bulk_execute(e, [&](ns::executor_coordinate_t<Executor> coord)
   {
-    result += std::get<0>(idx) + std::get<1>(idx) + std::get<2>(idx);
+    result += std::get<0>(coord) + std::get<1>(coord) + std::get<2>(coord);
   },
   shape);
 
@@ -307,15 +308,15 @@ __global__ void device_invoke(F f)
 void test_bulk_execute()
 {
   test();
-  test_2d(has_2d_shape{});
-  test_3d(has_3d_shape{});
+  test_2d(has_2d_coordinate{});
+  test_3d(has_3d_coordinate{});
 
 #ifdef __CUDACC__
   device_invoke<<<1,1>>>([] __device__ ()
   {
     test();
-    test_2d(has_2d_shape{});
-    test_3d(has_3d_shape{});
+    test_2d(has_2d_coordinate{});
+    test_3d(has_3d_coordinate{});
   });
   assert(cudaDeviceSynchronize() == cudaSuccess);
 #endif

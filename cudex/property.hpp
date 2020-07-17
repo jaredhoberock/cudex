@@ -31,6 +31,7 @@
 #include "property/allocator.hpp"
 #include "property/bulk_guarantee.hpp"
 #include "property/context.hpp"
+#include "property/coordinate_type.hpp"
 #include "property/dynamic_shared_memory_size.hpp"
 #include "property/stream.hpp"
 
