@@ -1,6 +1,8 @@
 #include <cassert>
 #include <cudex/executor/execute.hpp>
 
+namespace ns = cudex;
+
 #ifndef __CUDACC__
 #define __host__
 #define __device__
@@ -46,7 +48,7 @@ void test()
     has_execute_member e;
 
     bool invoked = false;
-    cudex::execute(e, [&]{ invoked = true; });
+    ns::execute(e, [&]{ invoked = true; });
     assert(invoked);
   }
 
@@ -54,7 +56,7 @@ void test()
     has_execute_free_function e;
 
     bool invoked = false;
-    cudex::execute(e, [&]{ invoked = true; });
+    ns::execute(e, [&]{ invoked = true; });
     assert(invoked);
   }
 }

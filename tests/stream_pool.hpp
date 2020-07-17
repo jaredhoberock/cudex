@@ -86,7 +86,7 @@ void test_bulk_execute(ns::static_stream_pool::executor_type ex)
 
 void test_stream_pool()
 {
-  using namespace cudex;
+  using namespace ns;
 
 #ifdef __CUDACC__
   {

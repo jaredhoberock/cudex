@@ -2,6 +2,10 @@
 #include <cudex/detail/functional/compose.hpp>
 #include <utility>
 
+
+namespace ns = cudex::detail;
+
+
 #ifndef __CUDACC__
 #define __host__
 #define __device__
@@ -162,7 +166,7 @@ struct move_only_invocable2
 __host__ __device__
 void test()
 {
-  using namespace cudex::detail;
+  using namespace ns;
 
   {
     int expected = 13 + 7 + 42;
