@@ -30,6 +30,7 @@
 
 #include <cuda_runtime_api.h>
 #include <utility>
+#include "functional/invoke.hpp"
 #include "throw_on_error.hpp"
 #include "throw_runtime_error.hpp"
 #include "terminate.hpp"
@@ -63,7 +64,7 @@ void with_current_device(int device, Function&& f)
 #endif
   }
 
-  std::forward<Function>(f)();
+  detail::invoke(std::forward<Function>(f));
 
   if(device != old_device)
   {

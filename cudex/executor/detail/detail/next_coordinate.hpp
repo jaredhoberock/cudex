@@ -44,7 +44,7 @@ namespace detail
 //     something like constexpr for is required to actually implement it this way
 //template<class Coord>
 //CUDEX_ANNOTATION
-//void next_index(Coord& coord, const Coord& shape)
+//void next_coordinate(Coord& coord, const Coord& shape)
 //{
 //  constexpr Coord origin{};
 //
