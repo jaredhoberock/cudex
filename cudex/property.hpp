@@ -29,6 +29,7 @@
 #include "detail/prologue.hpp"
 
 #include "property/allocator.hpp"
+#include "property/blocking.hpp"
 #include "property/bulk_guarantee.hpp"
 #include "property/context.hpp"
 #include "property/coordinate_type.hpp"
