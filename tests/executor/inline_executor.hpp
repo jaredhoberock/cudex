@@ -1,17 +1,21 @@
 #include <cassert>
 #include <cudex/executor/inline_executor.hpp>
+#include <cudex/property/blocking.hpp>
+
+
+namespace ns = cudex;
+
 
 #ifndef __CUDACC__
 #define __host__
 #define __device__
 #endif
 
+
 __host__ __device__
 void test()
 {
-  using namespace cudex;
-
-  inline_executor ex1;
+  ns::inline_executor ex1;
 
   int result = 0;
   int expected = 13;
@@ -23,10 +27,12 @@ void test()
 
   assert(expected == result);
 
-  inline_executor ex2;
+  ns::inline_executor ex2;
 
   assert(ex1 == ex2);
   assert(!(ex1 != ex2));
+
+  static_assert(ns::blocking.always == ns::inline_executor::query(ns::blocking), "Error");
 }
 
 

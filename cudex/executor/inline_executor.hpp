@@ -31,6 +31,7 @@
 #include <utility>
 #include "../detail/functional/invoke.hpp"
 #include "../detail/type_traits.hpp"
+#include "../property/blocking.hpp"
 #include "is_executor.hpp"
 
 CUDEX_NAMESPACE_OPEN_BRACE
@@ -57,6 +58,12 @@ struct inline_executor
   constexpr bool operator!=(const inline_executor&) const noexcept
   {
     return false;
+  }
+
+  CUDEX_ANNOTATION
+  constexpr static blocking_t query(blocking_t)
+  {
+    return blocking.always;
   }
 };
 
