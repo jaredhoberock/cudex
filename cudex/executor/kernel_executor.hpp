@@ -33,6 +33,7 @@
 #include "../detail/launch_kernel.hpp"
 #include "../detail/stream.hpp"
 #include "../detail/type_traits/is_invocable.hpp"
+#include "../property/blocking.hpp"
 #include "../property/bulk_guarantee.hpp"
 #include "../property/dynamic_shared_memory_size.hpp"
 #include "is_device_executor.hpp"
@@ -178,6 +179,13 @@ class kernel_executor
     constexpr static auto query(bulk_guarantee_t)
     {
       return bulk_guarantee.scoped(bulk_guarantee.parallel, bulk_guarantee.concurrent);
+    }
+
+
+    CUDEX_ANNOTATION
+    blocking_t query(blocking_t) const
+    {
+      return blocking.possibly;
     }
 
 

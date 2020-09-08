@@ -1,5 +1,9 @@
 #include <cassert>
 #include <cudex/executor/callback_executor.hpp>
+#include <cudex/property/blocking.hpp>
+
+
+namespace ns = cudex;
 
 
 int result;
@@ -7,11 +11,10 @@ int result;
 
 void test(cudaStream_t s)
 {
-  using namespace cudex;
+  ns::callback_executor ex1{s};
 
-  callback_executor ex1{s};
-
-  assert(ex1.stream() == s);
+  assert(s == ex1.stream());
+  assert(ns::blocking.possibly == ex1.query(ns::blocking));
 
   result = 0;
   int expected = 13;
@@ -25,7 +28,7 @@ void test(cudaStream_t s)
 
   assert(expected == result);
 
-  callback_executor ex2{s};
+  ns::callback_executor ex2{s};
 
   assert(ex1 == ex2);
   assert(!(ex1 != ex2));

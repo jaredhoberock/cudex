@@ -6,6 +6,7 @@
 #include <type_traits>
 #include <utility>
 #include "../detail/throw_on_error.hpp"
+#include "../property/blocking.hpp"
 
 
 CUDEX_NAMESPACE_OPEN_BRACE
@@ -100,6 +101,11 @@ class callback_executor
     inline cudaStream_t stream() const noexcept
     {
       return stream_;
+    }
+
+    inline blocking_t query(blocking_t) const noexcept
+    {
+      return blocking.possibly;
     }
 };
 
