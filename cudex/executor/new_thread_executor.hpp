@@ -26,19 +26,51 @@
 
 #pragma once
 
-#include "detail/prologue.hpp"
+#include "../detail/prologue.hpp"
 
-#include "executor/bulk_execute.hpp"
-#include "executor/callback_executor.hpp"
-#include "executor/execute.hpp"
-#include "executor/executor_index.hpp"
-#include "executor/executor_shape.hpp"
-#include "executor/is_device_executor.hpp"
-#include "executor/is_executor.hpp"
-#include "executor/is_executor_of.hpp"
-#include "executor/inline_executor.hpp"
-#include "executor/kernel_executor.hpp"
-#include "executor/new_thread_executor.hpp"
+#include <utility>
+#include "../detail/functional/invoke.hpp"
+#include "../detail/type_traits.hpp"
+#include "../property/blocking.hpp"
+#include "is_executor.hpp"
 
-#include "detail/epilogue.hpp"
+CUDEX_NAMESPACE_OPEN_BRACE
+
+
+struct new_thread_executor
+{
+  template<class Function,
+           CUDEX_REQUIRES(detail::is_invocable<Function&&>::value)
+          >
+  void execute(Function&& f) const noexcept
+  {
+    std::thread(std::forward<Function>(f)).detach();
+  }
+
+  CUDEX_ANNOTATION
+  constexpr bool operator==(const new_thread_executor&) const noexcept
+  {
+    return true;
+  }
+
+  CUDEX_ANNOTATION
+  constexpr bool operator!=(const new_thread_executor&) const noexcept
+  {
+    return false;
+  }
+
+  CUDEX_ANNOTATION
+  constexpr static blocking_t query(blocking_t)
+  {
+    return blocking.never;
+  }
+};
+
+
+static_assert(is_executor<new_thread_executor>::value, "Error.");
+
+
+CUDEX_NAMESPACE_CLOSE_BRACE
+
+#include "../detail/epilogue.hpp"
 

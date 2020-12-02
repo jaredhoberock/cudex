@@ -20,7 +20,7 @@ test : all-test-sources all-cpp-test-programs all-cuda-test-programs all-test-re
 
 # this compiles a .cpp file into an executable file (without a file extension)
 % : %.cpp
-	$(CXX) $(CCFLAGS) $< -lstdc++ -L/usr/local/cuda/lib64 -lcudart -o $@
+	$(CXX) $(CCFLAGS) $< -lstdc++ -lpthread -L/usr/local/cuda/lib64 -lcudart -o $@
 
 # this compiles a .cpp file into a CUDA executable file (without a file extension)
 %-cuda : %.cpp
