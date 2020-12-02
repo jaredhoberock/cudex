@@ -28,6 +28,7 @@
 
 #include "../detail/prologue.hpp"
 
+#include <thread>
 #include <utility>
 #include "../detail/functional/invoke.hpp"
 #include "../detail/type_traits.hpp"
