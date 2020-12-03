@@ -45,7 +45,7 @@ using is_executor_of = detail::conjunction<
   std::is_nothrow_copy_constructible<E>,
   std::is_nothrow_destructible<E>,
   detail::is_equality_comparable<E>,
-  detail::is_detected<execute_t, E, F>
+  detail::is_detected<execute_result_t, E, F>
 >;
 
 

@@ -42,17 +42,17 @@ namespace detail
 
 
 template<class T>
-using executor_member_function_t = decltype(std::declval<T>().executor());
+using executor_member_function_result_t = decltype(std::declval<T>().executor());
 
 template<class T>
-using has_executor_member_function = is_detected<executor_member_function_t, T>;
+using has_executor_member_function = is_detected<executor_member_function_result_t, T>;
 
 
 template<class T>
-using get_executor_free_function_t = decltype(get_executor(std::declval<T>()));
+using get_executor_free_function_result_t = decltype(get_executor(std::declval<T>()));
 
 template<class T>
-using has_get_executor_free_function = is_detected<get_executor_free_function_t, T>;
+using has_get_executor_free_function = is_detected<get_executor_free_function_result_t, T>;
 
 
 // this is the type of get_executor
@@ -62,10 +62,10 @@ struct dispatch_get_executor
   CUDEX_EXEC_CHECK_DISABLE
   template<class T,
            CUDEX_REQUIRES(has_executor_member_function<T&&>::value),
-           CUDEX_REQUIRES(is_executor<executor_member_function_t<T&&>>::value)
+           CUDEX_REQUIRES(is_executor<executor_member_function_result_t<T&&>>::value)
           >
   CUDEX_ANNOTATION
-  constexpr executor_member_function_t<T&&> operator()(T&& arg) const
+  constexpr executor_member_function_result_t<T&&> operator()(T&& arg) const
   {
     return std::forward<T>(arg).executor();
   }
@@ -78,10 +78,10 @@ struct dispatch_get_executor
   template<class T,
            CUDEX_REQUIRES(!has_executor_member_function<T&&>::value),
            CUDEX_REQUIRES(has_get_executor_free_function<T&&>::value),
-           CUDEX_REQUIRES(is_executor<get_executor_free_function_t<T&&>>::value)
+           CUDEX_REQUIRES(is_executor<get_executor_free_function_result_t<T&&>>::value)
           >
   CUDEX_ANNOTATION
-  constexpr get_executor_free_function_t<T&&> operator()(T&& arg) const
+  constexpr get_executor_free_function_result_t<T&&> operator()(T&& arg) const
   {
     return get_executor(std::forward<T>(arg));
   }
@@ -107,7 +107,7 @@ const __device__ detail::dispatch_get_executor get_executor;
 
 
 template<class T>
-using get_executor_t = decltype(CUDEX_NAMESPACE::get_executor(std::declval<T>()));
+using get_executor_result_t = decltype(CUDEX_NAMESPACE::get_executor(std::declval<T>()));
 
 
 CUDEX_NAMESPACE_CLOSE_BRACE

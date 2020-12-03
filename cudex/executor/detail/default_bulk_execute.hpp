@@ -127,11 +127,11 @@ void default_bulk_execute(const Executor& ex, Function&& f, executor_coordinate_
 
 
 template<class E, class F, class S>
-using default_bulk_execute_t = decltype(detail::default_bulk_execute(std::declval<E>(), std::declval<F>(), std::declval<S>()));
+using default_bulk_execute_result_t = decltype(detail::default_bulk_execute(std::declval<E>(), std::declval<F>(), std::declval<S>()));
 
 
 template<class E, class F, class S>
-using can_default_bulk_execute = is_detected<default_bulk_execute_t, E, F, S>;
+using can_default_bulk_execute = is_detected<default_bulk_execute_result_t, E, F, S>;
 
 
 } // end detail

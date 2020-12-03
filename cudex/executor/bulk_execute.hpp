@@ -41,17 +41,17 @@ namespace detail
 
 
 template<class E, class F, class S>
-using bulk_execute_member_function_t = decltype(std::declval<E>().bulk_execute(std::declval<F>(), std::declval<S>()));
+using bulk_execute_member_function_result_t = decltype(std::declval<E>().bulk_execute(std::declval<F>(), std::declval<S>()));
 
 template<class E, class F, class S>
-using has_bulk_execute_member_function = is_detected<bulk_execute_member_function_t, E, F, S>;
+using has_bulk_execute_member_function = is_detected<bulk_execute_member_function_result_t, E, F, S>;
 
 
 template<class E, class F, class S>
-using bulk_execute_free_function_t = decltype(bulk_execute(std::declval<E>(), std::declval<F>(), std::declval<S>()));
+using bulk_execute_free_function_result_t = decltype(bulk_execute(std::declval<E>(), std::declval<F>(), std::declval<S>()));
 
 template<class E, class F, class S>
-using has_bulk_execute_free_function = is_detected<bulk_execute_free_function_t, E, F, S>;
+using has_bulk_execute_free_function = is_detected<bulk_execute_free_function_result_t, E, F, S>;
 
 
 // this is the type of bulk_execute
@@ -113,6 +113,10 @@ const __device__ detail::dispatch_bulk_execute bulk_execute;
 
 
 } // end anonymous namespace
+
+
+template<class E, class F, class S>
+using bulk_execute_result_t = decltype(CUDEX_NAMESPACE::bulk_execute(std::declval<E>(), std::declval<F>(), std::declval<S>()));
 
 
 CUDEX_NAMESPACE_CLOSE_BRACE

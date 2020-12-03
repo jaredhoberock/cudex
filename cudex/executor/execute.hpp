@@ -41,17 +41,17 @@ namespace detail
 
 
 template<class E, class F>
-using execute_member_function_t = decltype(std::declval<E>().execute(std::declval<F>()));
+using execute_member_function_result_t = decltype(std::declval<E>().execute(std::declval<F>()));
 
 template<class E, class F>
-using has_execute_member_function = is_detected<execute_member_function_t, E, F>;
+using has_execute_member_function = is_detected<execute_member_function_result_t, E, F>;
 
 
 template<class E, class F>
-using execute_free_function_t = decltype(execute(std::declval<E>(), std::declval<F>()));
+using execute_free_function_result_t = decltype(execute(std::declval<E>(), std::declval<F>()));
 
 template<class E, class F>
-using has_execute_free_function = is_detected<execute_free_function_t, E, F>;
+using has_execute_free_function = is_detected<execute_free_function_result_t, E, F>;
 
 
 // this is the type of execute
@@ -101,7 +101,7 @@ const __device__ detail::dispatch_execute execute;
 
 
 template<class E, class F>
-using execute_t = decltype(CUDEX_NAMESPACE::execute(std::declval<E>(), std::declval<F>()));
+using execute_result_t = decltype(CUDEX_NAMESPACE::execute(std::declval<E>(), std::declval<F>()));
 
 
 CUDEX_NAMESPACE_CLOSE_BRACE
