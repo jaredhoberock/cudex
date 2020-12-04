@@ -36,6 +36,7 @@
 #include "detail/throw_on_error.hpp"
 #include "detail/type_traits/is_invocable.hpp"
 #include "detail/with_current_device.hpp"
+#include "executor/is_device_executor.hpp"
 #include "executor/kernel_executor.hpp"
 
 
@@ -52,6 +53,19 @@ class static_stream_pool
       public:
         executor_type(const executor_type&) = default;
 
+        using kernel_executor::coordinate_type;
+        using kernel_executor::device;
+        using kernel_executor::query;
+
+        // XXX WAR a problem with nvcc's handling of is_detected & stream_member_function_t
+        //     by explicitly defining an extra stream member function
+        //using kernel_executor::stream;
+        CUDEX_ANNOTATION
+        inline cudaStream_t stream() const
+        {
+          return kernel_executor::stream();
+        }
+
         CUDEX_ANNOTATION
         inline bool operator==(const executor_type& other) const
         {
@@ -63,10 +77,6 @@ class static_stream_pool
         {
           return !(*this == other);
         }
-
-        using kernel_executor::device;
-        using kernel_executor::coordinate_type;
-        using kernel_executor::stream;
 
         // executor_type::execute can only be called on the host
         // because its stream was created on the host
@@ -148,6 +158,9 @@ class static_stream_pool
     const std::vector<detail::stream> streams_;
     std::atomic<std::size_t> counter_;
 };
+
+
+static_assert(is_device_executor<static_stream_pool::executor_type>::value, "Error.");
 
 
 CUDEX_NAMESPACE_CLOSE_BRACE
