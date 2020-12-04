@@ -123,17 +123,19 @@ class static_stream_pool
       wait();
     }
 
+    inline std::size_t size() const
+    {
+      return streams_.size();
+    }
+
     inline void wait()
     {
-      detail::with_current_device(stream().device(), [this]
+      std::vector<detail::event> events(streams_.begin(), streams_.end());
+      
+      for(const auto& event : events)
       {
-        std::vector<detail::event> events(streams_.begin(), streams_.end());
-        
-        for(const auto& event : events)
-        {
-          detail::throw_on_error(cudaEventSynchronize(event.native_handle()), "static_stream_pool::wait: CUDA error after cudaEventSynchronize");
-        }
-      });
+        detail::throw_on_error(cudaEventSynchronize(event.native_handle()), "static_stream_pool::wait: CUDA error after cudaEventSynchronize");
+      }
     }
 
     inline executor_type executor()

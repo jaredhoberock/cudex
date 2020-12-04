@@ -84,7 +84,7 @@ void test_bulk_execute(ns::static_stream_pool::executor_type ex)
 }
 
 
-void test_stream_pool()
+void test(int device, std::size_t num_streams)
 {
   using namespace ns;
 
@@ -92,7 +92,7 @@ void test_stream_pool()
   {
     // static_stream_pool::executor_type::execute requires a CUDA C++ compiler
 
-    static_stream_pool pool(0, 4);
+    static_stream_pool pool(device, num_streams);
 
     static_stream_pool::executor_type ex = pool.executor();
 
@@ -112,7 +112,7 @@ void test_stream_pool()
   {
     // static_stream_pool::executor_type::bulk_execute requires a CUDA C++ compiler
 
-    static_stream_pool pool(0, 4);
+    static_stream_pool pool(device, num_streams);
 
     static_stream_pool::executor_type ex = pool.executor();
 
@@ -124,9 +124,7 @@ void test_stream_pool()
   {
     // everything else works in CUDA C++ or C++
 
-    int num_streams = 4;
-
-    static_stream_pool pool(0, num_streams);
+    static_stream_pool pool(device, num_streams);
 
     // round-robin through executors
     std::vector<static_stream_pool::executor_type> first_round;
@@ -163,6 +161,23 @@ void test_stream_pool()
         }
       }
     }
+  }
+}
+
+
+void test_stream_pool()
+{
+  int num_devices{};
+  if(cudaError_t e = cudaGetDeviceCount(&num_devices))
+  {
+    throw std::runtime_error(cudaGetErrorString(e));
+  }
+
+  // test static_stream_pool on each device with 4 streams
+  std::size_t num_streams = 4;
+  for(int d = 0; d < num_devices; ++d)
+  {
+    test(d, num_streams);
   }
 }
 
