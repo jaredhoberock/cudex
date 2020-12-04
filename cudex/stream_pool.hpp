@@ -29,6 +29,7 @@
 #include <atomic>
 #include <cstdint>
 #include <cuda_runtime_api.h>
+#include <exception>
 #include <utility>
 #include <vector>
 #include "detail/event.hpp"
@@ -108,7 +109,12 @@ class static_stream_pool
     inline static_stream_pool(int device, std::size_t num_streams)
       : streams_(make_streams(device, num_streams)),
         counter_{}
-    {}
+    {
+      if(num_streams == 0)
+      {
+        throw std::runtime_error("static_stream_pool ctor: num_streams must be non-zero.");
+      }
+    }
 
     static_stream_pool(const static_stream_pool&) = delete;
 
@@ -119,12 +125,15 @@ class static_stream_pool
 
     inline void wait()
     {
-      std::vector<detail::event> events(streams_.begin(), streams_.end());
-      
-      for(const auto& event : events)
+      detail::with_current_device(stream().device(), [this]
       {
-        detail::throw_on_error(cudaEventSynchronize(event.native_handle()), "static_stream_pool::wait: CUDA error after cudaEventSynchronize");
-      }
+        std::vector<detail::event> events(streams_.begin(), streams_.end());
+        
+        for(const auto& event : events)
+        {
+          detail::throw_on_error(cudaEventSynchronize(event.native_handle()), "static_stream_pool::wait: CUDA error after cudaEventSynchronize");
+        }
+      });
     }
 
     inline executor_type executor()
